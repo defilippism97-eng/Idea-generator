@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { MODEL_BLUEPRINT, MODEL_INTERVIEW, VANTAGE_SYSTEM_PROMPT } from "@/lib/vantage";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   try {
     const response = await client.messages.create({
       model,
-      max_tokens: mode === "blueprint" ? 4096 : 2048,
+      max_tokens: mode === "blueprint" ? 16000 : 4096,
       system: VANTAGE_SYSTEM_PROMPT,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
     });
