@@ -2,12 +2,16 @@ import Anthropic from "@anthropic-ai/sdk";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+const CONTINUE_NUDGE =
+  "Continua esattamente da dove ti sei interrotto, senza ripetere nulla di quanto hai già scritto sopra e senza premesse.";
+
 /**
  * Claude 5 puo' fermarsi per max_tokens ben prima di aver scritto tutto il
  * testo visibile richiesto (una parte del budget va a ragionamento interno
- * non mostrato). Se lo stop_reason e' "max_tokens", ripete la chiamata con
- * il testo parziale come turno "assistant" di prefill: il modello continua
- * esattamente da li' invece di ripetersi, e concateniamo il risultato.
+ * non mostrato). Se lo stop_reason e' "max_tokens", rimanda il testo
+ * parziale come turno "assistant" seguito da un turno "user" che chiede di
+ * proseguire (l'API rifiuta conversazioni che finiscono in "assistant", quindi
+ * niente prefill) e concateniamo il risultato.
  */
 export async function streamWithContinuation(
   client: Anthropic,
@@ -20,7 +24,10 @@ export async function streamWithContinuation(
 ): Promise<string> {
   let full = "";
   for (let attempt = 0; attempt <= maxContinuations; attempt++) {
-    const currentMessages: Msg[] = attempt === 0 ? messages : [...messages, { role: "assistant", content: full }];
+    const currentMessages: Msg[] =
+      attempt === 0
+        ? messages
+        : [...messages, { role: "assistant", content: full }, { role: "user", content: CONTINUE_NUDGE }];
     const stream = client.messages.stream({
       model,
       max_tokens: maxTokens,
