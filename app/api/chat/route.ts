@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   try {
     const response = await client.messages.create({
       model,
-      max_tokens: mode === "blueprint" ? 4096 : 1024,
+      max_tokens: mode === "blueprint" ? 4096 : 2048,
       system: VANTAGE_SYSTEM_PROMPT,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
     });
