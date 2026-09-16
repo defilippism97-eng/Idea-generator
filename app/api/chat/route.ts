@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { MODEL_BLUEPRINT, MODEL_INTERVIEW, VANTAGE_SYSTEM_PROMPT } from "@/lib/vantage";
+import { streamWithContinuation } from "@/lib/anthropicStream";
+import { MODEL_INTERVIEW, MODEL_SYNTHESIS, VANTAGE_SYSTEM_PROMPT } from "@/lib/vantage";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -8,6 +9,8 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
+
+type Mode = "interview" | "summary" | "full";
 
 export async function POST(req: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -20,37 +23,28 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const messages: ChatMessage[] = body.messages ?? [];
-  const mode: "interview" | "blueprint" = body.mode === "blueprint" ? "blueprint" : "interview";
+  const mode: Mode = body.mode === "summary" || body.mode === "full" ? body.mode : "interview";
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return Response.json({ error: "Nessun messaggio fornito." }, { status: 400 });
   }
 
   const client = new Anthropic({ apiKey });
-  const model = mode === "blueprint" ? MODEL_BLUEPRINT : MODEL_INTERVIEW;
-
-  let anthropicStream;
-  try {
-    anthropicStream = client.messages.stream({
-      model,
-      max_tokens: mode === "blueprint" ? 16000 : 4096,
-      system: VANTAGE_SYSTEM_PROMPT,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Errore sconosciuto.";
-    return Response.json({ error: message }, { status: 502 });
-  }
+  const model = mode === "interview" ? MODEL_INTERVIEW : MODEL_SYNTHESIS;
+  const maxTokens = mode === "full" ? 8000 : mode === "summary" ? 2048 : 4096;
 
   const encoder = new TextEncoder();
   const body_stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        for await (const event of anthropicStream) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-            controller.enqueue(encoder.encode(event.delta.text));
-          }
-        }
+        await streamWithContinuation(
+          client,
+          model,
+          maxTokens,
+          VANTAGE_SYSTEM_PROMPT,
+          messages.map((m) => ({ role: m.role, content: m.content })),
+          (text) => controller.enqueue(encoder.encode(text)),
+        );
       } catch (err) {
         const message = err instanceof Error ? err.message : "Errore durante lo streaming.";
         controller.enqueue(encoder.encode(`\n\n[Errore: ${message}]`));
