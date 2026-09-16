@@ -37,12 +37,34 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages, mode }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Errore nella richiesta.");
 
-      setMessages((prev) => [...prev, { role: "assistant", content: data.text }]);
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? `Errore nella richiesta (HTTP ${res.status}).`);
+      }
+
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        full += decoder.decode(value, { stream: true });
+        setMessages((prev) => {
+          const copy = [...prev];
+          copy[copy.length - 1] = { role: "assistant", content: full };
+          return copy;
+        });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore sconosciuto.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Errore sconosciuto. Se la risposta era lunga (Fase 3), potrebbe essere un timeout: riprova.",
+      );
     } finally {
       setLoading(false);
     }
@@ -61,23 +83,22 @@ export default function Home() {
 
       <main className="flex-1 overflow-y-auto px-6 py-4">
         <div className="flex flex-col gap-4">
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={`whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                m.role === "assistant"
-                  ? "bg-neutral-900 text-neutral-100"
-                  : "ml-auto max-w-[85%] bg-blue-600 text-white"
-              } ${m.role === "assistant" ? "max-w-[90%]" : ""}`}
-            >
-              {m.content}
-            </div>
-          ))}
-          {loading && (
-            <div className="max-w-[90%] rounded-2xl bg-neutral-900 px-4 py-3 text-sm text-neutral-400">
-              Vantage sta scrivendo…
-            </div>
-          )}
+          {messages.map((m, i) => {
+            const isStreamingEmpty =
+              loading && i === messages.length - 1 && m.role === "assistant" && m.content === "";
+            return (
+              <div
+                key={i}
+                className={`whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  m.role === "assistant"
+                    ? "max-w-[90%] bg-neutral-900 text-neutral-100"
+                    : "ml-auto max-w-[85%] bg-blue-600 text-white"
+                }`}
+              >
+                {isStreamingEmpty ? "Vantage sta scrivendo…" : m.content}
+              </div>
+            );
+          })}
           {error && (
             <div className="rounded-2xl border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-300">
               {error}

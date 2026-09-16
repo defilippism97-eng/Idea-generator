@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { MODEL_BLUEPRINT, MODEL_INTERVIEW, VANTAGE_SYSTEM_PROMPT } from "@/lib/vantage";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -29,22 +29,41 @@ export async function POST(req: Request) {
   const client = new Anthropic({ apiKey });
   const model = mode === "blueprint" ? MODEL_BLUEPRINT : MODEL_INTERVIEW;
 
+  let anthropicStream;
   try {
-    const response = await client.messages.create({
+    anthropicStream = client.messages.stream({
       model,
       max_tokens: mode === "blueprint" ? 16000 : 4096,
       system: VANTAGE_SYSTEM_PROMPT,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
     });
-
-    const text = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("\n");
-
-    return Response.json({ text, model });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Errore sconosciuto.";
     return Response.json({ error: message }, { status: 502 });
   }
+
+  const encoder = new TextEncoder();
+  const body_stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const event of anthropicStream) {
+          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+            controller.enqueue(encoder.encode(event.delta.text));
+          }
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Errore durante lo streaming.";
+        controller.enqueue(encoder.encode(`\n\n[Errore: ${message}]`));
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(body_stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Vantage-Model": model,
+    },
+  });
 }
