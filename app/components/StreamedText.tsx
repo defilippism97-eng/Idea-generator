@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Markdown } from "./Markdown";
+import { Markdown, Reference } from "./Markdown";
 
 export const READING_SPEEDS = [
   { id: "lento", label: "Lento", hint: "Per seguire parola per parola", cps: 22 },
@@ -104,12 +104,14 @@ export function StreamedMarkdown({
   streaming,
   speed,
   variant,
+  references,
   placeholder,
 }: {
   text: string;
   streaming: boolean;
   speed: SpeedId;
   variant?: "chat" | "doc";
+  references?: Reference[];
   placeholder: React.ReactNode;
 }) {
   const { shown, pending, revealAll } = useSmoothReveal(text, streaming, speed);
@@ -118,7 +120,7 @@ export function StreamedMarkdown({
 
   return (
     <>
-      <Markdown text={shown} variant={variant} />
+      <Markdown text={shown} variant={variant} references={references} />
       {pending > 0 && (
         <button
           onClick={revealAll}

@@ -46,10 +46,25 @@ export async function POST(req: Request) {
   const personas = await db.select().from(kbPersonas).where(eq(kbPersonas.domainId, best.id));
   const documents = await db.select().from(kbDocuments).where(eq(kbDocuments.domainId, best.id));
 
-  // Il materiale caricato dall'utente entra nel contesto della conversazione,
+  // Riferimenti numerati in un'unica serie: prima le fonti web dell'ambito,
+  // poi i documenti caricati. Così un [7] nel documento generato punta a
+  // qualcosa di preciso invece di essere un numero orfano.
+  const webSources = (best.sources ?? []).map((s, i) => ({
+    n: s.n ?? i + 1,
+    title: s.title,
+    url: s.url as string | null,
+  }));
+  const offset = webSources.reduce((max, s) => Math.max(max, s.n), 0);
+  const docSources = documents.map((doc, i) => ({
+    n: offset + i + 1,
+    title: doc.title,
+    url: null as string | null,
+  }));
+
+  // Il materiale caricato entra nel contesto già etichettato col suo numero,
   // troncato per non saturare la finestra dei modelli gratuiti.
   const material = documents
-    .map((doc) => `### ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`)
+    .map((doc, i) => `[${offset + i + 1}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`)
     .join("\n\n")
     .slice(0, MAX_TOTAL_CHARS);
 
@@ -60,7 +75,7 @@ export async function POST(req: Request) {
       description: best.description,
       personas,
       material: material || null,
-      documentTitles: documents.map((d) => d.title),
+      references: [...webSources, ...docSources],
     },
   });
 }

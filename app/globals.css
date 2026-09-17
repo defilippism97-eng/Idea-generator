@@ -611,6 +611,21 @@ body {
   .print-sheet .prose-vantage th {
     background: #eee;
   }
+  /* Le note e la bibliografia usano i colori del tema: su carta vanno
+     riportate al nero, altrimenti restano illeggibili. */
+  .print-sheet .citation {
+    background: none;
+    color: #000;
+    font-size: 0.7em;
+  }
+  .print-sheet .doc-biblio {
+    border-top: 1px solid #999;
+    break-inside: avoid;
+  }
+  .print-sheet .doc-biblio *,
+  .print-sheet .doc-biblio a {
+    color: #000 !important;
+  }
   @page {
     margin: 18mm 16mm;
   }
