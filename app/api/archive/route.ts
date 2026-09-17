@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { getOrCreateClientId } from "@/lib/clientId";
 import { getDb } from "@/lib/db/client";
 import { conversations } from "@/lib/db/schema";
@@ -13,9 +13,24 @@ function deriveTitle(messages: Message[]): string {
   return "Conversazione senza titolo";
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const clientId = await getOrCreateClientId();
+  const query = new URL(req.url).searchParams.get("q")?.trim() ?? "";
   const db = getDb();
+
+  // La ricerca guarda anche dentro i messaggi, non solo nel titolo: quello che
+  // si ricorda di una conversazione è spesso una frase detta, non come si
+  // chiama. Su un archivio personale una ILIKE basta e avanza.
+  const scope = query
+    ? and(
+        eq(conversations.clientId, clientId),
+        or(
+          ilike(conversations.title, `%${query}%`),
+          sql`${conversations.messages}::text ILIKE ${`%${query}%`}`,
+        ),
+      )
+    : eq(conversations.clientId, clientId);
+
   const rows = await db
     .select({
       id: conversations.id,
@@ -25,7 +40,7 @@ export async function GET() {
       updatedAt: conversations.updatedAt,
     })
     .from(conversations)
-    .where(eq(conversations.clientId, clientId))
+    .where(scope)
     .orderBy(desc(conversations.updatedAt));
 
   return Response.json({ conversations: rows });

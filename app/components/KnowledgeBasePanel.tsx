@@ -356,6 +356,7 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
   const [domains, setDomains] = useState<Domain[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openDomainId, setOpenDomainId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const [creating, setCreating] = useState(false);
   const [manualName, setManualName] = useState("");
@@ -371,9 +372,9 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
   const [stopping, setStopping] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  async function load() {
+  async function load(query = search) {
     try {
-      const res = await fetch("/api/kb");
+      const res = await fetch(`/api/kb?q=${encodeURIComponent(query)}`);
       const data = await res.json();
       setDomains(data.domains ?? []);
       onChanged?.();
@@ -547,8 +548,21 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
               </button>
             </div>
 
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                load(e.target.value);
+              }}
+              placeholder="Cerca tra ambiti, ruoli e documenti…"
+              className="v-input mt-3"
+              aria-label="Cerca nella knowledge base"
+            />
+
             {domains === null ? (
               <p className="mt-4 text-xs text-muted">Carico…</p>
+            ) : domains.length === 0 && search ? (
+              <p className="mt-4 text-sm text-muted">Nessun ambito contiene “{search}”.</p>
             ) : domains.length === 0 ? (
               <p className="mt-4 text-sm text-muted">
                 Nessun ambito ancora. Creane uno qui sopra e compilalo tu, oppure vai su “Come si popola” per

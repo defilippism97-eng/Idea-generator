@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Attachment, FileAttach } from "./FileAttach";
+import { VoiceInput } from "./VoiceInput";
 
 type Step = "has-idea" | "idea-input" | "objective" | "scope-choice" | "scope-input";
 
@@ -150,6 +151,13 @@ export function IntakeWizard({
   const [objective, setObjective] = useState<ObjectiveId | null>(null);
   const [scopeText, setScopeText] = useState("");
   const [scopeAttachment, setScopeAttachment] = useState<Attachment | null>(null);
+  const dictationBaseRef = useRef("");
+
+  function dictateIdea(text: string, isFinal: boolean) {
+    const merged = `${dictationBaseRef.current} ${text}`.trim();
+    if (isFinal) dictationBaseRef.current = merged;
+    setIdeaText(merged);
+  }
 
   function submitIdea() {
     const message = withAttachment(ideaText.trim(), ideaAttachment);
@@ -219,13 +227,19 @@ export function IntakeWizard({
               Anche solo poche righe bastano — puoi aggiungere dettagli dopo.
             </p>
           </div>
-          <textarea
-            className="v-input min-h-32 resize-none"
-            placeholder="Es: Vorrei un'app che…"
-            value={ideaText}
-            onChange={(e) => setIdeaText(e.target.value)}
-            autoFocus
-          />
+          <div className="flex items-start gap-2">
+            <textarea
+              className="v-input min-h-32 resize-none"
+              placeholder="Es: Vorrei un'app che…"
+              value={ideaText}
+              onChange={(e) => {
+                setIdeaText(e.target.value);
+                dictationBaseRef.current = e.target.value;
+              }}
+              autoFocus
+            />
+            <VoiceInput onTranscript={dictateIdea} disabled={loading} />
+          </div>
           <FileAttach attachment={ideaAttachment} onChange={setIdeaAttachment} />
           <button onClick={submitIdea} disabled={loading || !ideaText.trim()} className="v-cta w-full">
             Continua
