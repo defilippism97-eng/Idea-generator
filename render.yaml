@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: vantage-agent
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
