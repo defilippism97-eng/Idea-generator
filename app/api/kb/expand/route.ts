@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { jsonrepair } from "jsonrepair";
 import { createClient, streamWithContinuation } from "@/lib/llmStream";
 import { searchTavily } from "@/lib/tavily";
 import { buildKbExpansionPrompt, KB_EXPANSION_SYSTEM_PROMPT, MODEL_SYNTHESIS } from "@/lib/vantage";
@@ -20,7 +21,10 @@ function extractJson(text: string): ExpansionResult {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start === -1 || end === -1) throw new Error("Il modello non ha restituito JSON valido.");
-  return JSON.parse(text.slice(start, end + 1));
+  const candidate = text.slice(start, end + 1);
+  // I modelli spesso lasciano newline non escapati o virgolette non chiuse
+  // dentro le stringhe: jsonrepair sistema questi errori comuni prima del parse.
+  return JSON.parse(jsonrepair(candidate));
 }
 
 export async function POST(req: Request) {
@@ -51,27 +55,32 @@ export async function POST(req: Request) {
   const client = createClient(openrouterKey);
   const userPrompt = buildKbExpansionPrompt(domain, sources);
 
-  let raw: string;
-  try {
-    raw = await streamWithContinuation(
-      client,
-      MODEL_SYNTHESIS,
-      3000,
-      KB_EXPANSION_SYSTEM_PROMPT,
-      [{ role: "user", content: userPrompt }],
-      () => {},
-    );
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Errore sconosciuto.";
-    return Response.json({ error: `Errore LLM: ${message}` }, { status: 502 });
+  let parsed: ExpansionResult | null = null;
+  let lastRaw = "";
+  let lastError: string | null = null;
+
+  // Il JSON generato dal modello a volte ha piccoli errori di sintassi non
+  // risolvibili da jsonrepair (es. troncamento): un secondo tentativo da
+  // zero risolve la maggior parte dei casi senza appesantire troppo l'attesa.
+  for (let attempt = 0; attempt < 2 && !parsed; attempt++) {
+    try {
+      lastRaw = await streamWithContinuation(
+        client,
+        MODEL_SYNTHESIS,
+        6000,
+        KB_EXPANSION_SYSTEM_PROMPT,
+        [{ role: "user", content: userPrompt }],
+        () => {},
+      );
+      parsed = extractJson(lastRaw);
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : "Errore sconosciuto.";
+    }
   }
 
-  let parsed: ExpansionResult;
-  try {
-    parsed = extractJson(raw);
-  } catch {
+  if (!parsed) {
     return Response.json(
-      { error: "Risposta del modello non interpretabile come JSON.", raw },
+      { error: `Risposta del modello non interpretabile come JSON: ${lastError}`, raw: lastRaw },
       { status: 502 },
     );
   }
