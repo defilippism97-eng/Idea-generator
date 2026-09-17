@@ -116,20 +116,34 @@ Due modi per iniziare:
 - **Hai già un'idea precisa?** Scrivimela direttamente (anche solo un paio di righe) e la mettiamo subito alla prova.
 - **Non hai ancora un'idea?** Raccontami: qual è il tuo contesto (lavoro, studio, vita privata) e quali 2-3 cose ti fanno perdere tempo o ti frustrano nella routine — partiamo da lì.`;
 
-// Modello via OpenRouter (nessun costo per token). Un solo modello per tutte
-// le fasi: a differenza di Claude non c'è qui un tiering Sonnet/Opus, ma le
-// costanti restano separate per non toccare la logica delle fasi altrove nel
-// codice (interview/summary/full) se in futuro si torna a modelli diversi.
+// Modelli via OpenRouter (nessun costo per token). Il progetto deve restare
+// sempre a costo zero: invece di un tiering Sonnet/Opus come con Claude, qui
+// c'è una CATENA DI FALLBACK tra modelli gratuiti. Se il primo va in rate
+// limit, viene rimosso dal catalogo o smette di funzionare, l'app prova
+// automaticamente il successivo (vedi lib/llmStream.ts streamWithFallback) —
+// nessun modello a pagamento viene mai chiamato.
 //
-// Provato prima nvidia/nemotron-3.5-lightning:free: spesso rompeva il
-// personaggio e a volte riversava il proprio ragionamento interno nel testo
-// di risposta invece di rispondere (vedi commit precedenti). dots-3-note-preview
-// (MoE 16B parametri attivi/280B totali) si è comportato molto meglio nei
-// test: resta in personaggio, ragionamento su canale separato, buona qualità
-// in italiano. È una "preview" gratuita con scadenza indicata al 2026-09-30:
-// da ricontrollare/sostituire dopo quella data.
-export const MODEL_INTERVIEW = "dots-studio/dots-3-note-preview:free";
-export const MODEL_SYNTHESIS = "dots-studio/dots-3-note-preview:free";
+// Ordine di preferenza, dal più affidabile nei test reali:
+// 1. dots-studio/dots-3-note-preview:free — MoE 16B parametri attivi/280B
+//    totali, non-reasoning. Il migliore nei test: resta in personaggio,
+//    buona qualità in italiano. È una "preview" con scadenza indicata al
+//    2026-09-30 — dopo quella data va ricontrollato/rimpiazzato in cima.
+// 2. nvidia/nemotron-3.5-lightning:free — funziona ma più spesso rompe il
+//    personaggio o riversa il ragionamento interno nel testo di risposta.
+//    Ripiego accettabile, non prima scelta.
+// 3. nex-agi/nex-n2.5-pro:free — modello "agentic coding" di taglia
+//    maggiore, non testato a fondo su roleplay/profilazione ma con budget
+//    di token ampio; ultima rete di sicurezza prima di restituire un errore.
+export const FALLBACK_MODELS = [
+  "dots-studio/dots-3-note-preview:free",
+  "nvidia/nemotron-3.5-lightning:free",
+  "nex-agi/nex-n2.5-pro:free",
+];
+
+/** @deprecated usa FALLBACK_MODELS con streamWithFallback */
+export const MODEL_INTERVIEW = FALLBACK_MODELS[0];
+/** @deprecated usa FALLBACK_MODELS con streamWithFallback */
+export const MODEL_SYNTHESIS = FALLBACK_MODELS[0];
 
 export const SUMMARY_TRIGGER = `Ho raccolto abbastanza contesto. Genera ora SOLO la Fase 3A — la Sintesi Esecutiva — seguendo esattamente il formato richiesto nelle tue istruzioni. Non generare ancora l'MVP Completo: chiedimi prima se sono interessato.`;
 

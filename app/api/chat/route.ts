@@ -1,5 +1,5 @@
-import { createClient, streamWithContinuation } from "@/lib/llmStream";
-import { MODEL_INTERVIEW, MODEL_SYNTHESIS, VANTAGE_SYSTEM_PROMPT } from "@/lib/vantage";
+import { createClient, streamWithFallback } from "@/lib/llmStream";
+import { FALLBACK_MODELS, VANTAGE_SYSTEM_PROMPT } from "@/lib/vantage";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -29,21 +29,22 @@ export async function POST(req: Request) {
   }
 
   const client = createClient(apiKey);
-  const model = mode === "interview" ? MODEL_INTERVIEW : MODEL_SYNTHESIS;
   const maxTokens = mode === "full" ? 8000 : mode === "summary" ? 2048 : 4096;
 
   const encoder = new TextEncoder();
+  let usedModel = FALLBACK_MODELS[0];
   const body_stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        await streamWithContinuation(
+        const result = await streamWithFallback(
           client,
-          model,
+          FALLBACK_MODELS,
           maxTokens,
           VANTAGE_SYSTEM_PROMPT,
           messages.map((m) => ({ role: m.role, content: m.content })),
           (text) => controller.enqueue(encoder.encode(text)),
         );
+        usedModel = result.model;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Errore durante lo streaming.";
         controller.enqueue(encoder.encode(`\n\n[Errore: ${message}]`));
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
   return new Response(body_stream, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "X-Vantage-Model": model,
+      "X-Vantage-Model": usedModel,
     },
   });
 }

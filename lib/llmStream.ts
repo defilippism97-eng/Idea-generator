@@ -60,3 +60,44 @@ export async function streamWithContinuation(
   }
   return full;
 }
+
+/**
+ * Prova ogni modello della lista in ordine di preferenza, passando al
+ * successivo se quello corrente va in errore (rate limit esaurito, modello
+ * rimosso/non disponibile, timeout, ecc.). Tutti i modelli della lista sono
+ * gratuiti: l'app resta sempre a costo zero anche quando un modello smette
+ * di funzionare, senza bisogno di un monitoraggio esterno.
+ */
+export async function streamWithFallback(
+  client: OpenAI,
+  models: string[],
+  maxTokens: number,
+  system: string,
+  messages: Msg[],
+  onDelta: (text: string) => void,
+  maxContinuations = 3,
+  onModelSwitch?: (model: string, attempt: number) => void,
+): Promise<{ text: string; model: string }> {
+  let lastError: unknown = null;
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    onModelSwitch?.(model, i);
+    try {
+      const text = await streamWithContinuation(
+        client,
+        model,
+        maxTokens,
+        system,
+        messages,
+        onDelta,
+        maxContinuations,
+      );
+      if (text.trim()) return { text, model };
+      lastError = new Error(`${model}: nessuna risposta generata.`);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  const message = lastError instanceof Error ? lastError.message : "Errore sconosciuto.";
+  throw new Error(`Tutti i modelli gratuiti disponibili hanno fallito. Ultimo errore: ${message}`);
+}

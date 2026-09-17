@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { jsonrepair } from "jsonrepair";
-import { createClient, streamWithContinuation } from "@/lib/llmStream";
+import { createClient, streamWithFallback } from "@/lib/llmStream";
 import { searchTavily } from "@/lib/tavily";
-import { buildKbExpansionPrompt, KB_EXPANSION_SYSTEM_PROMPT, MODEL_SYNTHESIS } from "@/lib/vantage";
+import { buildKbExpansionPrompt, FALLBACK_MODELS, KB_EXPANSION_SYSTEM_PROMPT } from "@/lib/vantage";
 import { getDb } from "@/lib/db/client";
 import { kbDomains, kbPersonas } from "@/lib/db/schema";
 
@@ -64,14 +64,16 @@ export async function POST(req: Request) {
   // zero risolve la maggior parte dei casi senza appesantire troppo l'attesa.
   for (let attempt = 0; attempt < 2 && !parsed; attempt++) {
     try {
-      lastRaw = await streamWithContinuation(
-        client,
-        MODEL_SYNTHESIS,
-        6000,
-        KB_EXPANSION_SYSTEM_PROMPT,
-        [{ role: "user", content: userPrompt }],
-        () => {},
-      );
+      lastRaw = (
+        await streamWithFallback(
+          client,
+          FALLBACK_MODELS,
+          6000,
+          KB_EXPANSION_SYSTEM_PROMPT,
+          [{ role: "user", content: userPrompt }],
+          () => {},
+        )
+      ).text;
       parsed = extractJson(lastRaw);
     } catch (err) {
       lastError = err instanceof Error ? err.message : "Errore sconosciuto.";
