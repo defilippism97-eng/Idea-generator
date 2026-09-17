@@ -54,6 +54,7 @@
   --color-bg: var(--bg);
   --color-bg-elevated: var(--bg-elevated);
   --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
   --color-ink: var(--text);
   --color-muted: var(--text-muted);
   --color-line: var(--border);

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Logo, Wordmark } from "./Logo";
+import { READING_SPEEDS, SpeedId } from "./StreamedText";
 
 export type NavKey = "dashboard" | "conversazioni" | "kb";
 
@@ -21,6 +22,7 @@ const ICONS = {
   close: "M6 6l12 12M18 6L6 18",
   sun: "M12 4V2m0 20v-2m8-8h2M2 12h2m13.7-5.7 1.4-1.4M4.9 19.1l1.4-1.4m0-11.4L4.9 4.9m14.2 14.2-1.4-1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
   moon: "M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z",
+  gauge: "M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm1.5-3.5L17 7M4.5 18a9 9 0 1 1 15 0",
 } as const;
 
 function Icon({ path, size = 17 }: { path: string; size?: number }) {
@@ -74,6 +76,61 @@ function useTheme() {
   }
 
   return { theme, toggle };
+}
+
+function SpeedControl({ speed, onChange }: { speed: SpeedId; onChange: (s: SpeedId) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="v-btn !px-2.5"
+        title="Velocità di scrittura delle risposte"
+        aria-label="Velocità di scrittura delle risposte"
+        aria-expanded={open}
+      >
+        <Icon path={ICONS.gauge} size={15} />
+      </button>
+      {open && (
+        <div className="v-panel animate-scale-in absolute top-full right-0 z-50 mt-2 w-60 rounded-xl p-1.5 shadow-2xl">
+          <p className="px-2.5 pt-1.5 pb-2 text-[0.7rem] tracking-wide text-muted uppercase">
+            Velocità di scrittura
+          </p>
+          {READING_SPEEDS.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => {
+                onChange(s.id);
+                setOpen(false);
+              }}
+              className={`flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                speed === s.id ? "bg-surface-hover" : "hover:bg-surface"
+              }`}
+            >
+              <span className={`mt-1 text-[0.6rem] ${speed === s.id ? "text-gold" : "text-transparent"}`}>
+                ◆
+              </span>
+              <span>
+                <span className="block text-[0.82rem]">{s.label}</span>
+                <span className="block text-[0.7rem] text-muted">{s.hint}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function NavItem({
@@ -198,6 +255,8 @@ export function AppShell({
   kbDomains,
   onSelectConversation,
   onNewConversation,
+  speed,
+  onSpeedChange,
   children,
 }: {
   nav: NavKey;
@@ -206,6 +265,8 @@ export function AppShell({
   kbDomains: string[];
   onSelectConversation: (id: string) => void;
   onNewConversation: () => void;
+  speed: SpeedId;
+  onSpeedChange: (s: SpeedId) => void;
   children: React.ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -273,6 +334,7 @@ export function AppShell({
               <Icon path={ICONS.plus} size={15} />
               <span className="hidden sm:inline">Nuova analisi</span>
             </button>
+            <SpeedControl speed={speed} onChange={onSpeedChange} />
             <button
               onClick={toggle}
               className="v-btn !px-2.5"
