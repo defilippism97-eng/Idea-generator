@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { IntakeWizard } from "./components/IntakeWizard";
 import { KnowledgeBasePanel } from "./components/KnowledgeBasePanel";
 import { Logo } from "./components/Logo";
+import { Markdown } from "./components/Markdown";
 import { FULL_MVP_TRIGGER, SUMMARY_TRIGGER, VANTAGE_GREETING } from "@/lib/vantage";
 
 type Message = {
@@ -342,9 +343,9 @@ export default function Home() {
             </div>
           )}
           <div
-            className={`whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
+            className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
               m.role === "user"
-                ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white"
+                ? "whitespace-pre-wrap bg-gradient-to-br from-indigo-500 to-violet-600 text-white"
                 : m.role === "persona"
                   ? "border border-amber-500/20 bg-amber-500/[0.06] text-amber-50"
                   : m.role === "stakeholder"
@@ -354,7 +355,13 @@ export default function Home() {
                       : "border border-white/[0.06] bg-white/[0.03] text-neutral-100"
             }`}
           >
-            {isStreamingEmpty ? <TypingIndicator /> : m.content}
+            {isStreamingEmpty ? (
+              <TypingIndicator />
+            ) : m.role === "user" ? (
+              m.content
+            ) : (
+              <Markdown text={m.content} />
+            )}
           </div>
         </div>
       </div>

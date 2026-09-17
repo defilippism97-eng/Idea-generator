@@ -89,8 +89,119 @@ body {
     background-position: 200% 0;
   }
 }
+/* Markdown minimale per i messaggi (niente plugin typography): solo le
+   regole che servono davvero per il testo che il modello genera. */
+.prose-vantage {
+  font-size: inherit;
+  line-height: inherit;
+}
+.prose-vantage > :first-child {
+  margin-top: 0;
+}
+.prose-vantage > :last-child {
+  margin-bottom: 0;
+}
+.prose-vantage p {
+  margin: 0.65em 0;
+}
+.prose-vantage strong {
+  font-weight: 600;
+  color: currentColor;
+}
+.prose-vantage em {
+  font-style: italic;
+}
+.prose-vantage ul,
+.prose-vantage ol {
+  margin: 0.5em 0;
+  padding-left: 1.25em;
+}
+.prose-vantage ul {
+  list-style: disc;
+}
+.prose-vantage ol {
+  list-style: decimal;
+}
+.prose-vantage li {
+  margin: 0.2em 0;
+}
+.prose-vantage li > p {
+  margin: 0;
+}
+.prose-vantage h1,
+.prose-vantage h2,
+.prose-vantage h3,
+.prose-vantage h4 {
+  font-family: var(--font-display), ui-sans-serif, sans-serif;
+  font-weight: 600;
+  margin: 0.9em 0 0.4em;
+  line-height: 1.3;
+}
+.prose-vantage h1 {
+  font-size: 1.15em;
+}
+.prose-vantage h2 {
+  font-size: 1.08em;
+}
+.prose-vantage h3 {
+  font-size: 1.02em;
+}
+.prose-vantage code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.15em 0.4em;
+  border-radius: 0.35em;
+  font-size: 0.88em;
+  font-family: ui-monospace, "SF Mono", monospace;
+}
+.prose-vantage pre {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.6em;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  margin: 0.6em 0;
+}
+.prose-vantage pre code {
+  background: none;
+  padding: 0;
+}
+.prose-vantage blockquote {
+  border-left: 2px solid rgba(255, 255, 255, 0.15);
+  padding-left: 0.8em;
+  margin: 0.6em 0;
+  color: rgba(244, 244, 246, 0.75);
+}
+.prose-vantage hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 1em 0;
+}
+.prose-vantage a {
+  color: #a5b4fc;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-vantage table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.6em 0;
+  font-size: 0.9em;
+}
+.prose-vantage th,
+.prose-vantage td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+.prose-vantage th {
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 600;
+}
+
 .animate-shimmer {
-  background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-1));
+  /* background-image (non lo shorthand "background") per non resettare
+     background-clip impostato dall'utility Tailwind bg-clip-text */
+  background-image: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-1));
   background-size: 200% auto;
   animation: shimmer 3s linear infinite;
 }
