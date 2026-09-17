@@ -34,7 +34,7 @@ export async function expandKbDomain(client: OpenAI, domain: string) {
   if (tavilyKey) {
     try {
       sources = await searchTavily(
-        `${domain}: pain point quotidiani, strumenti software usati, tendenze e mercato`,
+        `${domain}: problemi quotidiani, strumenti software usati, tendenze e mercato`,
         tavilyKey,
       );
     } catch (err) {

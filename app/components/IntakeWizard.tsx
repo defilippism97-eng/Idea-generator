@@ -92,7 +92,7 @@ export function IntakeWizard({
             Da idea a <span className="animate-shimmer bg-clip-text text-transparent">MVP</span>
           </h1>
           <p className="max-w-sm text-sm text-neutral-400">
-            Vantage profila la tua idea, la stress-testa e ti consegna un prompt pronto per l&apos;AI di coding.
+            Vantage profila la tua idea, la mette alla prova e ti consegna un prompt pronto per l&apos;AI di coding.
           </p>
         </div>
       )}
