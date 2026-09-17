@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Attachment, FileAttach } from "./FileAttach";
 import { MemoryPanel } from "./MemoryPanel";
+import { RowActions } from "./icons";
 import { VANTAGE_SELF_KNOWLEDGE } from "@/lib/vantage";
 
 type Source = { n: number; title: string; url: string };
@@ -127,6 +128,13 @@ function RoleEditor({
   persona?: Persona;
   onSaved: () => void;
 }) {
+  async function removeRole() {
+    if (!persona) return;
+    if (!confirm(`Svuotare il ruolo ${role.label} di questo ambito?`)) return;
+    await fetch(`/api/kb/personas/${persona.id}`, { method: "DELETE" });
+    onSaved();
+  }
+
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(persona?.name ?? "");
   const [prompt, setPrompt] = useState(persona?.systemPrompt ?? "");
@@ -195,16 +203,21 @@ function RoleEditor({
             <p className="mt-1 text-[0.8rem] text-muted">Non ancora compilato — {role.hint}</p>
           )}
         </div>
-        <button
-          onClick={() => {
-            setName(persona?.name ?? "");
-            setPrompt(persona?.systemPrompt ?? "");
-            setEditing(true);
-          }}
-          className="v-btn shrink-0"
-        >
-          {persona ? "Modifica" : "Compila"}
-        </button>
+        <span className="flex shrink-0 items-center gap-1">
+          <button
+            onClick={() => {
+              setName(persona?.name ?? "");
+              setPrompt(persona?.systemPrompt ?? "");
+              setEditing(true);
+            }}
+            className="v-btn"
+          >
+            {persona ? "Modifica" : "Compila"}
+          </button>
+          {persona && (
+            <RowActions onDelete={removeRole} renameLabel="" deleteLabel={`Svuota il ruolo ${role.label}`} />
+          )}
+        </span>
       </div>
       {persona && (
         <details className="mt-2">
@@ -215,6 +228,89 @@ function RoleEditor({
         </details>
       )}
     </div>
+  );
+}
+
+/** Riga di un ambito: apre il dettaglio e porta in chiaro rinomina ed eliminazione. */
+function DomainRow({
+  domain,
+  open,
+  onToggle,
+  onChanged,
+}: {
+  domain: Domain;
+  open: boolean;
+  onToggle: () => void;
+  onChanged: () => void;
+}) {
+  const [renaming, setRenaming] = useState(false);
+  const [draft, setDraft] = useState(domain.name);
+
+  async function commitRename() {
+    const next = draft.trim();
+    setRenaming(false);
+    if (!next || next === domain.name) return;
+    await fetch(`/api/kb/domains/${domain.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: next }),
+    });
+    onChanged();
+  }
+
+  async function remove() {
+    if (!confirm(`Eliminare l'ambito "${domain.name}" con i suoi ruoli e documenti?`)) return;
+    await fetch(`/api/kb/domains/${domain.id}`, { method: "DELETE" });
+    onChanged();
+  }
+
+  return (
+    <li className="v-card overflow-hidden">
+      {renaming ? (
+        <div className="px-4 py-3">
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename();
+              if (e.key === "Escape") setRenaming(false);
+            }}
+            className="v-input !py-1.5 !text-[0.85rem]"
+            aria-label="Nuovo nome dell'ambito"
+          />
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 pr-3">
+          <button
+            onClick={onToggle}
+            className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 text-left text-sm"
+          >
+            <span className="min-w-0">
+              <span className="block truncate font-medium">{domain.name}</span>
+              <span className="mt-0.5 block text-[0.72rem] text-muted">
+                {domain.origin === "manuale" ? "creato a mano" : "da ricerca"} · {domain.personas.length}/3
+                ruoli
+                {domain.documents.length > 0 && ` · ${domain.documents.length} doc.`}
+                {domain.sources?.length ? ` · ${domain.sources.length} fonti` : " · nessuna fonte"}
+              </span>
+            </span>
+            <span className="shrink-0 text-muted">{open ? "−" : "+"}</span>
+          </button>
+          <RowActions
+            onRename={() => {
+              setDraft(domain.name);
+              setRenaming(true);
+            }}
+            onDelete={remove}
+            renameLabel="Rinomina l'ambito"
+            deleteLabel="Elimina l'ambito"
+          />
+        </div>
+      )}
+      {open && <DomainDetail domain={domain} onChanged={onChanged} />}
+    </li>
   );
 }
 
@@ -263,11 +359,6 @@ function DomainDetail({ domain, onChanged }: { domain: Domain; onChanged: () => 
     onChanged();
   }
 
-  async function removeDomain() {
-    if (!confirm(`Eliminare l'ambito "${domain.name}" con i suoi ruoli e documenti?`)) return;
-    await fetch(`/api/kb/domains/${domain.id}`, { method: "DELETE" });
-    onChanged();
-  }
 
   return (
     <div className="border-t border-line px-4 py-4">
@@ -351,12 +442,11 @@ function DomainDetail({ domain, onChanged }: { domain: Domain; onChanged: () => 
               >
                 <span className="text-gold">◆</span>
                 <span className="min-w-0 flex-1 truncate">{doc.title}</span>
-                <button
-                  onClick={() => removeDocument(doc.id)}
-                  className="shrink-0 text-[0.72rem] text-muted transition-colors hover:text-red-400"
-                >
-                  Elimina
-                </button>
+                <RowActions
+                  onDelete={() => removeDocument(doc.id)}
+                  renameLabel=""
+                  deleteLabel={`Elimina ${doc.title}`}
+                />
               </li>
             ))}
           </ul>
@@ -377,11 +467,6 @@ function DomainDetail({ domain, onChanged }: { domain: Domain; onChanged: () => 
         </div>
       </div>
 
-      <div className="mt-5 flex justify-end border-t border-line pt-3">
-        <button onClick={removeDomain} className="v-btn !text-red-400">
-          Elimina ambito
-        </button>
-      </div>
     </div>
   );
 }
@@ -610,24 +695,13 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
             ) : (
               <ul className="mt-4 flex flex-col gap-2">
                 {domains.map((d) => (
-                  <li key={d.id} className="v-card overflow-hidden">
-                    <button
-                      onClick={() => setOpenDomainId(openDomainId === d.id ? null : d.id)}
-                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate font-medium">{d.name}</span>
-                        <span className="mt-0.5 block text-[0.72rem] text-muted">
-                          {d.origin === "manuale" ? "creato a mano" : "da ricerca"} ·{" "}
-                          {d.personas.length}/3 ruoli
-                          {d.documents.length > 0 && ` · ${d.documents.length} doc.`}
-                          {d.sources?.length ? ` · ${d.sources.length} fonti` : " · nessuna fonte"}
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-muted">{openDomainId === d.id ? "−" : "+"}</span>
-                    </button>
-                    {openDomainId === d.id && <DomainDetail domain={d} onChanged={load} />}
-                  </li>
+                  <DomainRow
+                    key={d.id}
+                    domain={d}
+                    open={openDomainId === d.id}
+                    onToggle={() => setOpenDomainId(openDomainId === d.id ? null : d.id)}
+                    onChanged={load}
+                  />
                 ))}
               </ul>
             )}
