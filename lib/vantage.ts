@@ -116,13 +116,12 @@ Due modi per iniziare:
 - **Hai già un'idea precisa?** Scrivimela direttamente (anche solo un paio di righe) e la mettiamo subito alla prova.
 - **Non hai ancora un'idea?** Raccontami: qual è il tuo contesto (lavoro, studio, vita privata) e quali 2-3 cose ti fanno perdere tempo o ti frustrano nella routine — partiamo da lì.`;
 
-// Tiering dei modelli (vedi CLAUDE.md): Sonnet per l'intervista/intake e per la
-// Persona simulata; Opus per qualunque sintesi/reportistica finale (Sintesi
-// Esecutiva e MVP Completo).
-export const MODEL_INTERVIEW = "claude-sonnet-5";
-export const MODEL_SYNTHESIS = "claude-opus-5";
-/** @deprecated usa MODEL_SYNTHESIS */
-export const MODEL_BLUEPRINT = MODEL_SYNTHESIS;
+// Modello via OpenRouter (nessun costo per token). Un solo modello per tutte
+// le fasi: a differenza di Claude non c'è qui un tiering Sonnet/Opus, ma le
+// costanti restano separate per non toccare la logica delle fasi altrove nel
+// codice (interview/summary/full) se in futuro si torna a modelli diversi.
+export const MODEL_INTERVIEW = "nvidia/nemotron-3.5-lightning:free";
+export const MODEL_SYNTHESIS = "nvidia/nemotron-3.5-lightning:free";
 
 export const SUMMARY_TRIGGER = `Ho raccolto abbastanza contesto. Genera ora SOLO la Fase 3A — la Sintesi Esecutiva — seguendo esattamente il formato richiesto nelle tue istruzioni. Non generare ancora l'MVP Completo: chiedimi prima se sono interessato.`;
 

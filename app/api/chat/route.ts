@@ -1,5 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { streamWithContinuation } from "@/lib/anthropicStream";
+import { createClient, streamWithContinuation } from "@/lib/llmStream";
 import { MODEL_INTERVIEW, MODEL_SYNTHESIS, VANTAGE_SYSTEM_PROMPT } from "@/lib/vantage";
 
 export const runtime = "nodejs";
@@ -13,10 +12,10 @@ type ChatMessage = {
 type Mode = "interview" | "summary" | "full";
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return Response.json(
-      { error: "ANTHROPIC_API_KEY non configurata sul server." },
+      { error: "OPENROUTER_API_KEY non configurata sul server." },
       { status: 500 },
     );
   }
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Nessun messaggio fornito." }, { status: 400 });
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = createClient(apiKey);
   const model = mode === "interview" ? MODEL_INTERVIEW : MODEL_SYNTHESIS;
   const maxTokens = mode === "full" ? 8000 : mode === "summary" ? 2048 : 4096;
 
