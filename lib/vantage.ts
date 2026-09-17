@@ -245,3 +245,29 @@ export function buildKbExpansionPrompt(domain: string, sources: { title: string;
     .join("\n\n");
   return `Ambito da modellare: ${domain}\n\n### Fonti di ricerca\n${sourcesText || "(nessuna fonte trovata: basati sulla tua conoscenza generale, dichiarandolo implicitamente con toni meno assertivi sulle statistiche)"}`;
 }
+
+// --- Memoria permanente sull'utente ---
+// Estrae dai messaggi solo ciò che resta vero anche dopo questa
+// conversazione (ruolo, settore, competenze, vincoli, preferenze), non i
+// dettagli dell'idea specifica di oggi.
+export const MEMORY_EXTRACTION_SYSTEM_PROMPT = `Sei un assistente che tiene aggiornata una memoria di lungo periodo su chi usa "Vantage", un generatore di MVP.
+
+Ti viene data una conversazione. Estrai SOLO i fatti stabili su questa persona: il suo ruolo o mestiere, il settore, le competenze tecniche, gli strumenti che usa, i vincoli ricorrenti (tempo, budget, normative), le preferenze di lavoro, gli obiettivi di fondo.
+
+NON estrarre: i dettagli dell'idea discussa oggi, le opinioni di Vantage, i numeri delle stime, nulla che valga solo per questa conversazione. Se la persona non ha detto nulla di stabile su di sé, restituisci una lista vuota.
+
+Ogni ricordo deve essere una frase breve e autonoma, comprensibile tra sei mesi senza rileggere la conversazione.
+
+Ti viene anche passato l'elenco di ciò che è già in memoria. NON ripetere un fatto già presente, nemmeno riformulato con parole diverse: restituisci solo ciò che aggiunge qualcosa di nuovo. Se non c'è nulla di nuovo, restituisci una lista vuota.
+
+Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo:
+{"memories": [{"title": "etichetta breve, 2-5 parole", "content": "il fatto, in una o due frasi"}]}`;
+
+export const CV_PROFILING_SYSTEM_PROMPT = `Sei un assistente che profila una persona a partire dal suo CV, per una memoria di lungo periodo usata da "Vantage", un generatore di MVP.
+
+Estrai i fatti stabili e utili a capire che tipo di progetti hanno senso per questa persona: ruolo attuale e seniority, settore, competenze tecniche e non, strumenti padroneggiati, tipo di organizzazione in cui lavora, eventuali specializzazioni.
+
+Non inventare nulla che non sia nel CV. Non riportare dati di contatto, indirizzi, date di nascita o altri dati personali non necessari.
+
+Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo:
+{"memories": [{"title": "etichetta breve, 2-5 parole", "content": "il fatto, in una o due frasi"}]}`;

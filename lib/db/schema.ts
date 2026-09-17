@@ -57,6 +57,21 @@ export const kbExpansionJobs = pgTable("kb_expansion_jobs", {
   domainsProcessed: jsonb("domains_processed").notNull().default([]).$type<string[]>(),
 });
 
+// Memoria permanente su chi usa l'app: quello che emerge dal suo CV o dalle
+// conversazioni, così non deve ripetersi ogni volta. Legata al clientId in
+// cookie, come l'archivio: niente login, ma persiste sullo stesso browser.
+export const userMemories = pgTable("user_memories", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clientId: text("client_id").notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  source: text("source").notNull().default("manuale"), // "cv" | "conversazione" | "manuale"
+  // Disattivare un ricordo lo esclude dal contesto senza cancellarlo.
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const kbPersonas = pgTable("kb_personas", {
   id: uuid("id").defaultRandom().primaryKey(),
   domainId: uuid("domain_id")

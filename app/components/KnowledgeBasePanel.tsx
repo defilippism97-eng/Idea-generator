@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Attachment, FileAttach } from "./FileAttach";
+import { MemoryPanel } from "./MemoryPanel";
 
 type Source = { n: number; title: string; url: string };
 type Persona = { id: string; role: string; name: string; systemPrompt: string };
@@ -351,7 +352,7 @@ function DomainDetail({ domain, onChanged }: { domain: Domain; onChanged: () => 
 }
 
 export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
-  const [tab, setTab] = useState<"ambiti" | "espansione">("ambiti");
+  const [tab, setTab] = useState<"ambiti" | "espansione" | "profilo">("ambiti");
   const [domains, setDomains] = useState<Domain[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openDomainId, setOpenDomainId] = useState<string | null>(null);
@@ -524,6 +525,9 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
           <button onClick={() => setTab("espansione")} className={tabClass(tab === "espansione")}>
             Come si popola
           </button>
+          <button onClick={() => setTab("profilo")} className={tabClass(tab === "profilo")}>
+            Il tuo profilo
+          </button>
         </div>
 
         {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
@@ -576,6 +580,8 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
             )}
           </div>
         )}
+
+        {tab === "profilo" && <MemoryPanel />}
 
         {tab === "espansione" && (
           <div className="mt-5 flex flex-col gap-6">
