@@ -136,173 +136,195 @@ export function KnowledgeBasePanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="animate-fade-in absolute inset-x-0 top-16 z-20 mx-auto max-w-3xl border-b border-white/10 bg-[var(--background-elevated)]/95 px-6 py-4 shadow-2xl backdrop-blur-xl">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-sm font-semibold">
-          Knowledge Base — Domain Expert / MVP Designer / Stakeholder
-        </h2>
-        <button onClick={onClose} className="text-xs text-neutral-500 hover:text-neutral-300">
-          Chiudi ✕
-        </button>
-      </div>
+    <div
+      className="animate-fade-in fixed inset-0 z-40 flex items-start justify-center bg-black/60 px-4 pt-20 backdrop-blur-sm sm:pt-24"
+      onClick={onClose}
+    >
+      <div
+        className="animate-scale-in w-full max-w-lg rounded-2xl border border-white/10 bg-[var(--background-elevated)] p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-sm font-semibold">
+            🧠 Knowledge Base
+            <span className="ml-1.5 font-normal text-neutral-500">Domain Expert · MVP Designer · Stakeholder</span>
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-full p-1 text-xs text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-300"
+          >
+            ✕
+          </button>
+        </div>
 
-      <div className="mb-4 flex gap-1 border-b border-white/10">
-        <button
-          onClick={() => setTab("domains")}
-          className={`px-3 py-2 text-xs font-medium ${tab === "domains" ? "border-b-2 border-indigo-500 text-indigo-300" : "text-neutral-500"}`}
-        >
-          Domini
-        </button>
-        <button
-          onClick={() => setTab("auto")}
-          className={`px-3 py-2 text-xs font-medium ${tab === "auto" ? "border-b-2 border-indigo-500 text-indigo-300" : "text-neutral-500"}`}
-        >
-          ⏱️ Espansione Autonoma
-        </button>
-      </div>
+        <div className="mb-4 flex gap-1 rounded-full border border-white/10 bg-white/[0.02] p-1">
+          <button
+            onClick={() => setTab("domains")}
+            className={`flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${tab === "domains" ? "bg-indigo-500/20 text-indigo-300" : "text-neutral-500 hover:text-neutral-300"}`}
+          >
+            Domini
+          </button>
+          <button
+            onClick={() => setTab("auto")}
+            className={`flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${tab === "auto" ? "bg-indigo-500/20 text-indigo-300" : "text-neutral-500 hover:text-neutral-300"}`}
+          >
+            ⏱️ Espansione Autonoma
+          </button>
+        </div>
 
-      {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
+        {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
-      {tab === "domains" && (
-        <>
-          <div className="mb-4 flex gap-2">
-            <input
-              value={newDomain}
-              onChange={(e) => setNewDomain(e.target.value)}
-              placeholder="Es: fisioterapia freelance, growth marketing SaaS B2B…"
-              className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs outline-none focus:border-indigo-500"
-              onKeyDown={(e) => e.key === "Enter" && expand()}
-            />
-            <button
-              onClick={expand}
-              disabled={expanding || !newDomain.trim()}
-              className="rounded-lg border border-indigo-500/25 px-3 py-2 text-xs font-medium text-indigo-300 hover:bg-indigo-500/15 disabled:opacity-40"
-            >
-              {expanding ? "Ricerco…" : "🔍 Espandi KB"}
-            </button>
-          </div>
-
-          {domains === null ? (
-            <p className="text-xs text-neutral-500">Carico…</p>
-          ) : domains.length === 0 ? (
-            <p className="text-xs text-neutral-500">
-              Nessun ambito ancora nella knowledge base. Scrivine uno sopra per generarlo.
-            </p>
-          ) : (
-            <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto">
-              {domains.map((d) => (
-                <li key={d.id} className="rounded-lg border border-white/10">
-                  <button
-                    onClick={() => setOpenDomainId(openDomainId === d.id ? null : d.id)}
-                    className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-white/[0.03]"
-                  >
-                    <span className="font-medium">{d.name}</span>
-                    <span className="text-neutral-500">{d.personas.length} ruoli</span>
-                  </button>
-                  {openDomainId === d.id && (
-                    <div className="border-t border-white/10 px-3 py-2 text-xs text-neutral-300">
-                      <p className="mb-2 text-neutral-400">{d.description}</p>
-                      {d.personas.map((p) => (
-                        <div key={p.id} className="mb-1">
-                          <span className="font-medium">{ROLE_LABEL[p.role] ?? p.role}</span>: {p.name}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
-
-      {tab === "auto" && (
-        <div className="flex flex-col gap-3">
-          <p className="text-xs text-neutral-500">
-            Vantage passa il tempo indicato a ricercare e aggiungere ambiti alla knowledge base da solo,
-            un ambito alla volta, senza bisogno di restare con l&apos;app aperta.
-          </p>
-
-          {activeJob?.status === "running" ? (
-            <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3">
-              <p className="mb-1 text-xs font-medium text-amber-300">
-                🟢 In corso —{" "}
-                {activeJob.mode === "domain" ? `ambito: ${activeJob.domain}` : "bisogni emergenti generali"} · scade
-                alle {new Date(activeJob.endsAt).toLocaleTimeString("it-IT")}
-              </p>
-              <p className="mb-2 text-xs text-neutral-400">
-                {activeJob.domainsProcessed.length} ambiti processati finora.
-              </p>
-              <div className="max-h-40 overflow-y-auto rounded bg-black/30 p-2 font-mono text-[11px] text-neutral-400">
-                {activeJob.log.slice(-15).map((l, i) => (
-                  <div key={i}>{l.message}</div>
-                ))}
-              </div>
-            </div>
-          ) : (
+        <div className="max-h-[65vh] overflow-y-auto">
+          {tab === "domains" && (
             <>
-              <div className="flex gap-2">
+              <div className="mb-4 flex gap-2">
+                <input
+                  value={newDomain}
+                  onChange={(e) => setNewDomain(e.target.value)}
+                  placeholder="Es: fisioterapia freelance, growth marketing SaaS B2B…"
+                  className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs outline-none focus:border-indigo-500/50"
+                  onKeyDown={(e) => e.key === "Enter" && expand()}
+                />
                 <button
-                  onClick={() => setScheduleMode("general")}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium ${
-                    scheduleMode === "general"
-                      ? "border-indigo-500 bg-indigo-500/15 text-indigo-300"
-                      : "border-white/10 text-neutral-400"
-                  }`}
+                  onClick={expand}
+                  disabled={expanding || !newDomain.trim()}
+                  className="shrink-0 rounded-xl border border-indigo-500/25 bg-indigo-500/[0.06] px-3 py-2 text-xs font-medium text-indigo-300 transition-colors hover:bg-indigo-500/15 disabled:opacity-40"
                 >
-                  Bisogni emergenti generali
-                </button>
-                <button
-                  onClick={() => setScheduleMode("domain")}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium ${
-                    scheduleMode === "domain"
-                      ? "border-indigo-500 bg-indigo-500/15 text-indigo-300"
-                      : "border-white/10 text-neutral-400"
-                  }`}
-                >
-                  Ambito specifico
+                  {expanding ? "Ricerco…" : "🔍 Espandi KB"}
                 </button>
               </div>
 
-              {scheduleMode === "domain" && (
-                <input
-                  value={scheduleDomain}
-                  onChange={(e) => setScheduleDomain(e.target.value)}
-                  placeholder="Es: consulenza fiscale — Vantage esplorerà le sotto-nicchie"
-                  className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs outline-none focus:border-indigo-500"
-                />
+              {domains === null ? (
+                <p className="text-xs text-neutral-500">Carico…</p>
+              ) : domains.length === 0 ? (
+                <p className="text-xs text-neutral-500">
+                  Nessun ambito ancora nella knowledge base. Scrivine uno sopra per generarlo.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-1.5">
+                  {domains.map((d) => (
+                    <li
+                      key={d.id}
+                      className="overflow-hidden rounded-xl border border-white/10 transition-colors hover:border-white/20"
+                    >
+                      <button
+                        onClick={() => setOpenDomainId(openDomainId === d.id ? null : d.id)}
+                        className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs hover:bg-white/[0.03]"
+                      >
+                        <span className="font-medium">{d.name}</span>
+                        <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-neutral-400">
+                          {d.personas.length} ruoli
+                        </span>
+                      </button>
+                      {openDomainId === d.id && (
+                        <div className="border-t border-white/10 bg-white/[0.015] px-3.5 py-3 text-xs text-neutral-300">
+                          <p className="mb-2.5 text-neutral-400">{d.description}</p>
+                          <div className="flex flex-col gap-1">
+                            {d.personas.map((p) => (
+                              <div key={p.id}>
+                                <span className="font-medium text-neutral-200">{ROLE_LABEL[p.role] ?? p.role}</span>
+                                <span className="text-neutral-500">: {p.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               )}
-
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-neutral-400">Durata (minuti):</label>
-                <input
-                  type="number"
-                  min={5}
-                  max={240}
-                  value={scheduleMinutes}
-                  onChange={(e) => setScheduleMinutes(Number(e.target.value))}
-                  className="w-20 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-xs outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <button
-                onClick={startSchedule}
-                disabled={starting || (scheduleMode === "domain" && !scheduleDomain.trim())}
-                className="rounded-lg border border-emerald-500/25 bg-emerald-500/[0.06] px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-40"
-              >
-                {starting ? "Avvio…" : "▶️ Avvia espansione autonoma"}
-              </button>
             </>
           )}
 
-          {activeJob && activeJob.status !== "running" && (
-            <div className="rounded-lg border border-white/10 p-3 text-xs text-neutral-400">
-              Ultimo job ({activeJob.status === "done" ? "completato" : "interrotto"}):{" "}
-              {activeJob.domainsProcessed.length} ambiti aggiunti.
+          {tab === "auto" && (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-neutral-500">
+                Vantage passa il tempo indicato a ricercare e aggiungere ambiti alla knowledge base da solo, un
+                ambito alla volta, senza bisogno di restare con l&apos;app aperta.
+              </p>
+
+              {activeJob?.status === "running" ? (
+                <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3">
+                  <p className="mb-1 text-xs font-medium text-amber-300">
+                    🟢 In corso —{" "}
+                    {activeJob.mode === "domain" ? `ambito: ${activeJob.domain}` : "bisogni emergenti generali"} ·
+                    scade alle {new Date(activeJob.endsAt).toLocaleTimeString("it-IT")}
+                  </p>
+                  <p className="mb-2 text-xs text-neutral-400">
+                    {activeJob.domainsProcessed.length} ambiti processati finora.
+                  </p>
+                  <div className="max-h-40 overflow-y-auto rounded-lg bg-black/30 p-2 font-mono text-[11px] text-neutral-400">
+                    {activeJob.log.slice(-15).map((l, i) => (
+                      <div key={i}>{l.message}</div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setScheduleMode("general")}
+                      className={`flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                        scheduleMode === "general"
+                          ? "border-indigo-500 bg-indigo-500/15 text-indigo-300"
+                          : "border-white/10 text-neutral-400 hover:border-white/20"
+                      }`}
+                    >
+                      Bisogni emergenti generali
+                    </button>
+                    <button
+                      onClick={() => setScheduleMode("domain")}
+                      className={`flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                        scheduleMode === "domain"
+                          ? "border-indigo-500 bg-indigo-500/15 text-indigo-300"
+                          : "border-white/10 text-neutral-400 hover:border-white/20"
+                      }`}
+                    >
+                      Ambito specifico
+                    </button>
+                  </div>
+
+                  {scheduleMode === "domain" && (
+                    <input
+                      value={scheduleDomain}
+                      onChange={(e) => setScheduleDomain(e.target.value)}
+                      placeholder="Es: consulenza fiscale — Vantage esplorerà le sotto-nicchie"
+                      className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs outline-none focus:border-indigo-500/50"
+                    />
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-neutral-400">Durata (minuti):</label>
+                    <input
+                      type="number"
+                      min={5}
+                      max={240}
+                      value={scheduleMinutes}
+                      onChange={(e) => setScheduleMinutes(Number(e.target.value))}
+                      className="w-20 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-xs outline-none focus:border-indigo-500/50"
+                    />
+                  </div>
+
+                  <button
+                    onClick={startSchedule}
+                    disabled={starting || (scheduleMode === "domain" && !scheduleDomain.trim())}
+                    className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-3 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/15 disabled:opacity-40"
+                  >
+                    {starting ? "Avvio…" : "▶️ Avvia espansione autonoma"}
+                  </button>
+                </>
+              )}
+
+              {activeJob && activeJob.status !== "running" && (
+                <div className="rounded-xl border border-white/10 p-3 text-xs text-neutral-400">
+                  Ultimo job ({activeJob.status === "done" ? "completato" : "interrotto"}):{" "}
+                  {activeJob.domainsProcessed.length} ambiti aggiunti.
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
