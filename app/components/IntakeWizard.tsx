@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Attachment, FileAttach } from "./FileAttach";
-import { Logo } from "./Logo";
 
 type Step = "has-idea" | "idea-input" | "objective" | "scope-choice" | "scope-input";
 
@@ -14,30 +13,95 @@ function withAttachment(text: string, attachment: Attachment | null): string {
   return `${text}\n\n--- Informazioni aggiuntive fornite dall'utente ---\n${attachment.text}\n--- fine informazioni aggiuntive ---`;
 }
 
-function PrimaryButton({
-  children,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+const strokeProps = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.5,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
+function IdeaIcon() {
   return (
-    <button
-      {...props}
-      className="rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-950/40 transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
-    >
-      {children}
-    </button>
+    <svg width="52" height="52" viewBox="0 0 48 48" aria-hidden="true" className="text-brand-bright">
+      <g {...strokeProps}>
+        {/* razzo */}
+        <path d="M18 12c3.5 4 5 9 5 13v6H13v-6c0-4 1.5-9 5-13Z" />
+        <circle cx="18" cy="21" r="2.4" />
+        <path d="M13 26.5 9.5 30v4.5l3.5-2.5M23 26.5l3.5 3.5v4.5L23 32" />
+        {/* documento */}
+        <path d="M28 14h10v24H28" />
+        <path d="M31 21h4M31 26h4M31 31h3" />
+      </g>
+      <path d="M10 11.5q.7 2.4 3.5 3.1-2.8.7-3.5 3.1-.7-2.4-3.5-3.1 2.8-.7 3.5-3.1Z" fill="#D4A757" />
+    </svg>
   );
 }
 
-function SecondaryButton({
-  children,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+function ProblemIcon() {
   return (
-    <button
-      {...props}
-      className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:bg-white/[0.06] disabled:opacity-40"
-    >
-      {children}
+    <svg width="52" height="52" viewBox="0 0 48 48" aria-hidden="true" className="text-brand-bright">
+      <g {...strokeProps}>
+        {/* lampadina */}
+        <path d="M15.5 26a9 9 0 1 1 11 0c-1.3 1.1-1.9 2.4-2.1 3.9h-6.8c-.2-1.5-.8-2.8-2.1-3.9Z" />
+        <path d="M17.5 33h7M19 36.5h4" />
+        {/* ingranaggio */}
+        <circle cx="35" cy="32" r="4" />
+        <path d="M35 25.5v-2.5M35 38.5v2.5M41.5 32h2.5M28.5 32H26M39.6 27.4l1.8-1.8M30.4 36.6l-1.8 1.8M39.6 36.6l1.8 1.8M30.4 27.4l-1.8-1.8" />
+      </g>
+      <path d="M21 12.5q.7 2.4 3.5 3.1-2.8.7-3.5 3.1-.7-2.4-3.5-3.1 2.8-.7 3.5-3.1Z" fill="#D4A757" />
+    </svg>
+  );
+}
+
+function LuckyIcon() {
+  return (
+    <svg width="52" height="52" viewBox="0 0 48 48" aria-hidden="true" className="text-brand-bright">
+      <g {...strokeProps}>
+        <rect x="8" y="18" width="21" height="21" rx="4.5" />
+        <circle cx="15" cy="25" r="1.7" />
+        <circle cx="22" cy="32" r="1.7" />
+        <circle cx="15" cy="32" r="1.7" />
+        <circle cx="22" cy="25" r="1.7" />
+      </g>
+      <path d="M35 9q1.6 6 10 7.8-8.4 1.8-10 7.8-1.6-6-10-7.8Q33.4 15 35 9Z" fill="#D4A757" />
+    </svg>
+  );
+}
+
+function EntryCard({
+  icon,
+  title,
+  description,
+  cta,
+  onClick,
+  disabled,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  cta: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="v-card flex gap-4 p-5 sm:flex-col sm:items-center sm:gap-3 sm:p-6 sm:text-center">
+      <div className="flex shrink-0 items-center justify-center">{icon}</div>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:items-center">
+        <h3 className="font-display text-lg leading-tight font-semibold">{title}</h3>
+        <p className="text-[0.84rem] leading-snug text-muted sm:min-h-[2.6rem]">{description}</p>
+        <button onClick={onClick} disabled={disabled} className="v-cta mt-1">
+          {cta}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="self-start text-xs text-muted transition-colors hover:text-ink">
+      ← Indietro
     </button>
   );
 }
@@ -80,181 +144,151 @@ export function IntakeWizard({
     onStart(message);
   }
 
-  const inputClass =
-    "resize-none rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-sm outline-none transition-colors placeholder:text-neutral-500 focus:border-indigo-500/50 focus:bg-white/[0.05]";
-
-  return (
-    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 px-6 py-10">
-      {step === "has-idea" && (
-        <div className="animate-fade-in-up mb-2 flex flex-col items-center gap-3 text-center">
-          <Logo size={48} />
-          <h1 className="font-display text-2xl font-semibold tracking-tight">
-            Da idea a <span className="animate-shimmer bg-clip-text text-transparent">MVP</span>
-          </h1>
-          <p className="max-w-sm text-sm text-neutral-400">
-            Vantage profila la tua idea, la mette alla prova e ti consegna un prompt pronto per l&apos;AI di coding.
-          </p>
-        </div>
-      )}
-
-      <div className="animate-fade-in-up flex flex-col gap-5">
-        {step === "has-idea" && (
-          <>
-            <div className="text-center">
-              <h2 className="font-display text-base font-semibold">Hai già un&apos;idea da cui partire?</h2>
-              <p className="mt-1 text-sm text-neutral-400">
-                Puoi scriverla direttamente, o allegare un documento (PDF, Word, Excel/CSV, TXT).
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <PrimaryButton onClick={() => setStep("idea-input")} className="flex-1">
-                Sì, ho un&apos;idea
-              </PrimaryButton>
-              <SecondaryButton onClick={() => setStep("objective")} className="flex-1">
-                No, non ancora
-              </SecondaryButton>
-            </div>
-          </>
-        )}
-
-        {step === "idea-input" && (
-          <>
-            <div>
-              <h2 className="font-display text-base font-semibold">Raccontami la tua idea</h2>
-              <p className="mt-1 text-sm text-neutral-400">
-                Anche solo poche righe bastano — puoi aggiungere dettagli dopo.
-              </p>
-            </div>
-            <textarea
-              className={`min-h-32 ${inputClass}`}
-              placeholder="Es: Vorrei un'app che..."
-              value={ideaText}
-              onChange={(e) => setIdeaText(e.target.value)}
-              autoFocus
-            />
-            <FileAttach attachment={ideaAttachment} onChange={setIdeaAttachment} />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setStep("has-idea")}
-                className="rounded-xl border border-white/10 px-3 py-2 text-xs text-neutral-400 transition-colors hover:bg-white/5"
-              >
-                ← Indietro
-              </button>
-              <PrimaryButton onClick={submitIdea} disabled={loading || !ideaText.trim()} className="flex-1 !py-2">
-                Continua
-              </PrimaryButton>
-            </div>
-          </>
-        )}
-
-        {step === "objective" && (
-          <>
-            <div className="text-center">
-              <h2 className="font-display text-base font-semibold">Che tipo di idea stai cercando?</h2>
-            </div>
-            <div className="flex gap-2">
-              <SecondaryButton
-                onClick={() => {
-                  setObjective("tempo");
-                  setStep("scope-choice");
-                }}
-                className="flex-1 !py-4"
-              >
-                ⏱️ Risparmiare tempo
-              </SecondaryButton>
-              <SecondaryButton
-                onClick={() => {
-                  setObjective("profitto");
-                  setStep("scope-choice");
-                }}
-                className="flex-1 !py-4"
-              >
-                💰 Generare profitto
-              </SecondaryButton>
-            </div>
-            <button
-              onClick={() => setStep("has-idea")}
-              className="self-start text-xs text-neutral-500 hover:text-neutral-300"
-            >
-              ← Indietro
-            </button>
-          </>
-        )}
-
-        {step === "scope-choice" && (
-          <>
-            <div className="text-center">
-              <h2 className="font-display text-base font-semibold">Hai già in mente un ambito di riferimento?</h2>
-              <p className="mt-1 text-sm text-neutral-400">
-                Es. il tuo ruolo, la tua expertise, il tuo settore — o un CV/annuncio di lavoro da allegare.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <PrimaryButton onClick={() => setStep("scope-input")}>Sì, ce l&apos;ho</PrimaryButton>
-              <SecondaryButton onClick={submitScopeRandom} disabled={loading}>
-                No, sorprendimi con un ambito casuale
-              </SecondaryButton>
-            </div>
-            <button
-              onClick={() => setStep("objective")}
-              className="self-start text-xs text-neutral-500 hover:text-neutral-300"
-            >
-              ← Indietro
-            </button>
-          </>
-        )}
-
-        {step === "scope-input" && (
-          <>
-            <div>
-              <h2 className="font-display text-base font-semibold">Descrivi il tuo ambito</h2>
-              <p className="mt-1 text-sm text-neutral-400">
-                Ruolo, settore, expertise — oppure allega un CV o un annuncio di lavoro.
-              </p>
-            </div>
-            <textarea
-              className={`min-h-28 ${inputClass}`}
-              placeholder="Es: Sono un fisioterapista freelance..."
-              value={scopeText}
-              onChange={(e) => setScopeText(e.target.value)}
-              autoFocus
-            />
-            <FileAttach
-              attachment={scopeAttachment}
-              onChange={setScopeAttachment}
-              label="Allega CV / annuncio di lavoro"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setStep("scope-choice")}
-                className="rounded-xl border border-white/10 px-3 py-2 text-xs text-neutral-400 transition-colors hover:bg-white/5"
-              >
-                ← Indietro
-              </button>
-              <PrimaryButton
-                onClick={submitScopeKnown}
-                disabled={loading || (!scopeText.trim() && !scopeAttachment)}
-                className="flex-1 !py-2"
-              >
-                Continua
-              </PrimaryButton>
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="mt-2 flex items-center justify-between border-t border-white/[0.06] pt-4">
-        <button onClick={onSkip} className="text-xs text-neutral-500 underline hover:text-neutral-300">
-          Salta, preferisco scrivere liberamente
-        </button>
-        <button
+  if (step === "has-idea") {
+    return (
+      <div className="animate-fade-in-up grid gap-4 sm:grid-cols-3">
+        <EntryCard
+          icon={<IdeaIcon />}
+          title="Hai già un'idea?"
+          description="Inizia a descrivere la tua visione del prodotto."
+          cta="Inizia con idea"
+          onClick={() => setStep("idea-input")}
+        />
+        <EntryCard
+          icon={<ProblemIcon />}
+          title="Esplora un problema?"
+          description="Risparmia tempo o genera profitto in un ambito specifico."
+          cta="Identifica problema"
+          onClick={() => setStep("objective")}
+        />
+        <EntryCard
+          icon={<LuckyIcon />}
+          title="Mi sento fortunato!"
+          description="Chiedi a Vantage di generare un concept di MVP casuale."
+          cta="Sorprendimi"
           onClick={onFeelingLucky}
           disabled={loading}
-          className="rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:bg-amber-500/15 disabled:opacity-30"
-        >
-          🍀 Mi sento fortunato
-        </button>
+        />
+        <div className="sm:col-span-3">
+          <button
+            onClick={onSkip}
+            className="text-xs text-muted underline underline-offset-2 transition-colors hover:text-ink"
+          >
+            Salta, preferisco scrivere liberamente
+          </button>
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="v-card animate-fade-in-up flex max-w-xl flex-col gap-4 p-5 sm:p-6">
+      {step === "idea-input" && (
+        <>
+          <BackButton onClick={() => setStep("has-idea")} />
+          <div>
+            <h3 className="font-display text-lg font-semibold">Raccontami la tua idea</h3>
+            <p className="mt-1 text-[0.84rem] text-muted">
+              Anche solo poche righe bastano — puoi aggiungere dettagli dopo.
+            </p>
+          </div>
+          <textarea
+            className="v-input min-h-32 resize-none"
+            placeholder="Es: Vorrei un'app che…"
+            value={ideaText}
+            onChange={(e) => setIdeaText(e.target.value)}
+            autoFocus
+          />
+          <FileAttach attachment={ideaAttachment} onChange={setIdeaAttachment} />
+          <button onClick={submitIdea} disabled={loading || !ideaText.trim()} className="v-cta">
+            Continua
+          </button>
+        </>
+      )}
+
+      {step === "objective" && (
+        <>
+          <BackButton onClick={() => setStep("has-idea")} />
+          <h3 className="font-display text-lg font-semibold">Che tipo di idea stai cercando?</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              onClick={() => {
+                setObjective("tempo");
+                setStep("scope-choice");
+              }}
+              className="v-card px-4 py-5 text-left transition-transform hover:-translate-y-0.5"
+            >
+              <span className="font-display block text-base font-semibold">Risparmiare tempo</span>
+              <span className="mt-1 block text-[0.8rem] text-muted">
+                Togliere attrito e lavoro ripetitivo dalla routine.
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setObjective("profitto");
+                setStep("scope-choice");
+              }}
+              className="v-card px-4 py-5 text-left transition-transform hover:-translate-y-0.5"
+            >
+              <span className="font-display block text-base font-semibold">Generare profitto</span>
+              <span className="mt-1 block text-[0.8rem] text-muted">
+                Costruire qualcosa che qualcuno sia disposto a pagare.
+              </span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {step === "scope-choice" && (
+        <>
+          <BackButton onClick={() => setStep("objective")} />
+          <div>
+            <h3 className="font-display text-lg font-semibold">Hai già in mente un ambito di riferimento?</h3>
+            <p className="mt-1 text-[0.84rem] text-muted">
+              Il tuo ruolo, la tua expertise, il tuo settore — oppure un CV o un annuncio di lavoro da allegare.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <button onClick={() => setStep("scope-input")} className="v-cta">
+              Sì, ce l&apos;ho
+            </button>
+            <button onClick={submitScopeRandom} disabled={loading} className="v-btn justify-center !py-2.5">
+              No, scegline uno a caso
+            </button>
+          </div>
+        </>
+      )}
+
+      {step === "scope-input" && (
+        <>
+          <BackButton onClick={() => setStep("scope-choice")} />
+          <div>
+            <h3 className="font-display text-lg font-semibold">Descrivi il tuo ambito</h3>
+            <p className="mt-1 text-[0.84rem] text-muted">
+              Ruolo, settore, expertise — oppure allega un CV o un annuncio di lavoro.
+            </p>
+          </div>
+          <textarea
+            className="v-input min-h-28 resize-none"
+            placeholder="Es: Sono un fisioterapista freelance…"
+            value={scopeText}
+            onChange={(e) => setScopeText(e.target.value)}
+            autoFocus
+          />
+          <FileAttach
+            attachment={scopeAttachment}
+            onChange={setScopeAttachment}
+            label="Allega CV / annuncio di lavoro"
+          />
+          <button
+            onClick={submitScopeKnown}
+            disabled={loading || (!scopeText.trim() && !scopeAttachment)}
+            className="v-cta"
+          >
+            Continua
+          </button>
+        </>
+      )}
     </div>
   );
 }

@@ -27,12 +27,22 @@ export const metadata: Metadata = {
   description: "Agente per profilazione e generazione di MVP blueprint ad alto valore aggiunto.",
 };
 
+// Applica il tema salvato prima del primo paint, per non mostrare un lampo
+// del tema scuro a chi ha scelto quello chiaro.
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('vantage-theme');document.documentElement.dataset.theme=(t==='light'||t==='dark')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="it" className={`${bodyFont.variable} ${displayFont.variable} ${docFont.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-[var(--background)] text-[var(--foreground)]">
-        {children}
-      </body>
+    <html
+      lang="it"
+      data-theme="dark"
+      className={`${bodyFont.variable} ${displayFont.variable} ${docFont.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+      </head>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }
