@@ -9,7 +9,7 @@ type ChatMessage = {
   content: string;
 };
 
-type Mode = "interview" | "summary" | "full";
+type Mode = "interview" | "summary" | "full" | "stakeholder";
 
 export async function POST(req: Request) {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -22,14 +22,22 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const messages: ChatMessage[] = body.messages ?? [];
-  const mode: Mode = body.mode === "summary" || body.mode === "full" ? body.mode : "interview";
+  const mode: Mode =
+    body.mode === "summary" || body.mode === "full" || body.mode === "stakeholder"
+      ? body.mode
+      : "interview";
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return Response.json({ error: "Nessun messaggio fornito." }, { status: 400 });
   }
 
+  // Il turno "stakeholder" impersona un ruolo della knowledge base (il
+  // committente/cliente scettico per un dominio specifico) invece di
+  // Vantage: usa il suo system prompt generato ad-hoc, passato dal client.
+  const system: string = mode === "stakeholder" ? (body.systemPrompt ?? VANTAGE_SYSTEM_PROMPT) : VANTAGE_SYSTEM_PROMPT;
+
   const client = createClient(apiKey);
-  const maxTokens = mode === "full" ? 8000 : mode === "summary" ? 2048 : 4096;
+  const maxTokens = mode === "full" ? 8000 : mode === "summary" ? 2048 : mode === "stakeholder" ? 1500 : 4096;
 
   const encoder = new TextEncoder();
   let usedModel = FALLBACK_MODELS[0];
@@ -40,7 +48,7 @@ export async function POST(req: Request) {
           client,
           FALLBACK_MODELS,
           maxTokens,
-          VANTAGE_SYSTEM_PROMPT,
+          system,
           messages.map((m) => ({ role: m.role, content: m.content })),
           (text) => controller.enqueue(encoder.encode(text)),
         );
