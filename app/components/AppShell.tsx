@@ -214,7 +214,8 @@ export function ConversationRow({
           <span className="block text-[0.7rem] text-muted">{relativeTime(entry.updatedAt)}</span>
         </span>
       </button>
-      <span className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 max-lg:opacity-100">
+      {/* Sempre visibili: nascoste dietro l'hover non le trovava nessuno. */}
+      <span className="flex shrink-0 items-center gap-0.5">
         <button
           onClick={() => {
             setDraft(entry.title ?? "");
