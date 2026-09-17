@@ -120,8 +120,16 @@ Due modi per iniziare:
 // le fasi: a differenza di Claude non c'è qui un tiering Sonnet/Opus, ma le
 // costanti restano separate per non toccare la logica delle fasi altrove nel
 // codice (interview/summary/full) se in futuro si torna a modelli diversi.
-export const MODEL_INTERVIEW = "nvidia/nemotron-3.5-lightning:free";
-export const MODEL_SYNTHESIS = "nvidia/nemotron-3.5-lightning:free";
+//
+// Provato prima nvidia/nemotron-3.5-lightning:free: spesso rompeva il
+// personaggio e a volte riversava il proprio ragionamento interno nel testo
+// di risposta invece di rispondere (vedi commit precedenti). dots-3-note-preview
+// (MoE 16B parametri attivi/280B totali) si è comportato molto meglio nei
+// test: resta in personaggio, ragionamento su canale separato, buona qualità
+// in italiano. È una "preview" gratuita con scadenza indicata al 2026-09-30:
+// da ricontrollare/sostituire dopo quella data.
+export const MODEL_INTERVIEW = "dots-studio/dots-3-note-preview:free";
+export const MODEL_SYNTHESIS = "dots-studio/dots-3-note-preview:free";
 
 export const SUMMARY_TRIGGER = `Ho raccolto abbastanza contesto. Genera ora SOLO la Fase 3A — la Sintesi Esecutiva — seguendo esattamente il formato richiesto nelle tue istruzioni. Non generare ancora l'MVP Completo: chiedimi prima se sono interessato.`;
 

@@ -7,7 +7,10 @@ type Step = "has-idea" | "idea-input" | "objective" | "scope-choice" | "scope-in
 
 function withAttachment(text: string, attachment: Attachment | null): string {
   if (!attachment) return text;
-  return `${text}\n\n[Contenuto allegato: ${attachment.filename}]\n${attachment.text}`;
+  // Evitare riferimenti "a file" (es. "[Allegato: nome.pdf]"): alcuni modelli
+  // li interpretano come un invito a invocare un tool di lettura file
+  // inesistente invece di leggere il testo già estratto qui sotto.
+  return `${text}\n\n--- Informazioni aggiuntive fornite dall'utente ---\n${attachment.text}\n--- fine informazioni aggiuntive ---`;
 }
 
 export function IntakeWizard({
