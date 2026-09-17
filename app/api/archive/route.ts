@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getOrCreateClientId } from "@/lib/clientId";
 import { getDb } from "@/lib/db/client";
 import { conversations } from "@/lib/db/schema";
@@ -44,10 +44,13 @@ export async function POST(req: Request) {
   const title = deriveTitle(messages);
 
   if (id) {
+    // Il titolo si fissa alla creazione: riscriverlo a ogni salvataggio
+    // cancellerebbe le rinomine fatte dall'utente (e comunque deriva dal
+    // primo messaggio, che non cambia più).
     const [row] = await db
       .update(conversations)
-      .set({ messages, title, updatedAt: new Date() })
-      .where(eq(conversations.id, id))
+      .set({ messages, updatedAt: new Date() })
+      .where(and(eq(conversations.id, id), eq(conversations.clientId, clientId)))
       .returning({ id: conversations.id });
     if (row) return Response.json({ id: row.id });
   }

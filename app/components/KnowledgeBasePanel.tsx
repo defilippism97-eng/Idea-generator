@@ -183,7 +183,7 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
                 className="v-input flex-1"
                 onKeyDown={(e) => e.key === "Enter" && expand()}
               />
-              <button onClick={expand} disabled={expanding || !newDomain.trim()} className="v-cta sm:w-auto sm:px-5">
+              <button onClick={expand} disabled={expanding || !newDomain.trim()} className="v-cta shrink-0 px-5">
                 {expanding ? "Ricerco…" : "Espandi"}
               </button>
             </div>
@@ -304,7 +304,7 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
                 <button
                   onClick={startSchedule}
                   disabled={starting || (scheduleMode === "domain" && !scheduleDomain.trim())}
-                  className="v-cta sm:w-auto sm:self-start sm:px-6"
+                  className="v-cta self-start px-6"
                 >
                   {starting ? "Avvio…" : "Avvia espansione autonoma"}
                 </button>

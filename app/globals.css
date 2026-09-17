@@ -176,7 +176,6 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 100%;
   padding: 0.7rem 1rem;
   border-radius: 0.6rem;
   border: 1px solid color-mix(in srgb, var(--brand-bright) 45%, transparent);
@@ -216,7 +215,6 @@ body {
   pointer-events: none;
 }
 .v-cta-sm {
-  width: auto;
   padding: 0.45rem 0.8rem;
   font-size: 0.7rem;
 }
@@ -528,17 +526,74 @@ body {
 
 .doc-sheet {
   border-left-width: 3px;
-  background-image: repeating-linear-gradient(
-    0deg,
-    var(--grid-line) 0,
-    var(--grid-line) 1px,
-    transparent 1px,
-    transparent 27px
-  );
 }
 .doc-sheet[data-doc-variant="full"] {
   border-left-color: var(--gold);
 }
 .doc-sheet[data-doc-variant="summary"] {
   border-left-color: var(--brand-bright);
+}
+
+/* ============================================================
+   Stampa / esportazione PDF: si stampa solo il documento scelto,
+   su fondo bianco, senza l'interfaccia intorno.
+   ============================================================ */
+
+.print-sheet {
+  display: none;
+}
+
+@media print {
+  .app-root {
+    display: none !important;
+  }
+  .print-sheet {
+    display: block;
+    padding: 0;
+    color: #000;
+    background: #fff;
+    font-family: var(--font-body), ui-sans-serif, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+  .print-sheet .print-meta {
+    font-family: var(--font-doc), ui-monospace, monospace;
+    font-size: 8pt;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #555;
+    border-bottom: 1px solid #999;
+    padding-bottom: 6pt;
+    margin-bottom: 14pt;
+  }
+  .print-sheet .prose-vantage h1,
+  .print-sheet .prose-vantage h2,
+  .print-sheet .prose-vantage h3,
+  .print-sheet .prose-vantage h4 {
+    color: #000;
+    border-top-color: #bbb;
+    break-after: avoid;
+  }
+  .print-sheet .prose-vantage strong {
+    color: #000;
+  }
+  .print-sheet .prose-vantage a {
+    color: #000;
+  }
+  .print-sheet .prose-vantage pre,
+  .print-sheet .prose-vantage code {
+    background: #f2f2f2;
+    border-color: #ccc;
+    color: #000;
+  }
+  .print-sheet .prose-vantage th,
+  .print-sheet .prose-vantage td {
+    border-color: #999;
+  }
+  .print-sheet .prose-vantage th {
+    background: #eee;
+  }
+  @page {
+    margin: 18mm 16mm;
+  }
 }

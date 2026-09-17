@@ -20,6 +20,8 @@ const ICONS = {
   plus: "M12 5v14M5 12h14",
   menu: "M4 7h16M4 12h16M4 17h16",
   close: "M6 6l12 12M18 6L6 18",
+  pencil: "M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z",
+  trash: "M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13",
   sun: "M12 4V2m0 20v-2m8-8h2M2 12h2m13.7-5.7 1.4-1.4M4.9 19.1l1.4-1.4m0-11.4L4.9 4.9m14.2 14.2-1.4-1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
   moon: "M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z",
   gauge: "M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm1.5-3.5L17 7M4.5 18a9 9 0 1 1 15 0",
@@ -162,18 +164,97 @@ function NavItem({
   );
 }
 
+export function ConversationRow({
+  entry,
+  onSelect,
+  onRename,
+  onDelete,
+}: {
+  entry: ArchiveEntry;
+  onSelect: () => void;
+  onRename: (title: string) => void;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(entry.title ?? "");
+
+  function commit() {
+    const next = draft.trim();
+    if (next && next !== entry.title) onRename(next);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <li className="py-1">
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") setEditing(false);
+          }}
+          className="v-input !py-1.5 !text-[0.8rem]"
+          aria-label="Nuovo nome della conversazione"
+        />
+      </li>
+    );
+  }
+
+  return (
+    <li className="group flex items-center gap-1 rounded-lg pr-1 transition-colors hover:bg-surface">
+      <button onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-2.5 py-2 text-left">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line text-muted">
+          <Icon path={entry.kind === "explore" ? ICONS.sun : ICONS.chat} size={13} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[0.82rem] text-ink">{entry.title || "Senza titolo"}</span>
+          <span className="block text-[0.7rem] text-muted">{relativeTime(entry.updatedAt)}</span>
+        </span>
+      </button>
+      <span className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 max-lg:opacity-100">
+        <button
+          onClick={() => {
+            setDraft(entry.title ?? "");
+            setEditing(true);
+          }}
+          className="rounded p-1 text-muted transition-colors hover:text-ink"
+          title="Rinomina"
+          aria-label="Rinomina la conversazione"
+        >
+          <Icon path={ICONS.pencil} size={13} />
+        </button>
+        <button
+          onClick={onDelete}
+          className="rounded p-1 text-muted transition-colors hover:text-red-400"
+          title="Elimina"
+          aria-label="Elimina la conversazione"
+        >
+          <Icon path={ICONS.trash} size={13} />
+        </button>
+      </span>
+    </li>
+  );
+}
+
 function SidebarContent({
   nav,
   onNav,
   conversations,
   kbDomains,
   onSelectConversation,
+  onRenameConversation,
+  onDeleteConversation,
 }: {
   nav: NavKey;
   onNav: (k: NavKey) => void;
   conversations: ArchiveEntry[];
   kbDomains: string[];
   onSelectConversation: (id: string) => void;
+  onRenameConversation: (id: string, title: string) => void;
+  onDeleteConversation: (id: string) => void;
 }) {
   return (
     <>
@@ -213,21 +294,14 @@ function SidebarContent({
           {conversations.length === 0 && (
             <li className="py-1.5 text-xs text-muted">Nessuna conversazione salvata.</li>
           )}
-          {conversations.slice(0, 6).map((c) => (
-            <li key={c.id}>
-              <button
-                onClick={() => onSelectConversation(c.id)}
-                className="group flex w-full items-center gap-2.5 rounded-lg py-2 pr-1 text-left transition-colors hover:bg-surface"
-              >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line text-muted">
-                  <Icon path={c.kind === "explore" ? ICONS.sun : ICONS.chat} size={13} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[0.82rem] text-ink">{c.title || "Senza titolo"}</span>
-                  <span className="block text-[0.7rem] text-muted">{relativeTime(c.updatedAt)}</span>
-                </span>
-              </button>
-            </li>
+          {conversations.slice(0, 8).map((c) => (
+            <ConversationRow
+              key={c.id}
+              entry={c}
+              onSelect={() => onSelectConversation(c.id)}
+              onRename={(title) => onRenameConversation(c.id, title)}
+              onDelete={() => onDeleteConversation(c.id)}
+            />
           ))}
         </ul>
 
@@ -254,6 +328,8 @@ export function AppShell({
   conversations,
   kbDomains,
   onSelectConversation,
+  onRenameConversation,
+  onDeleteConversation,
   onNewConversation,
   speed,
   onSpeedChange,
@@ -264,6 +340,8 @@ export function AppShell({
   conversations: ArchiveEntry[];
   kbDomains: string[];
   onSelectConversation: (id: string) => void;
+  onRenameConversation: (id: string, title: string) => void;
+  onDeleteConversation: (id: string) => void;
   onNewConversation: () => void;
   speed: SpeedId;
   onSpeedChange: (s: SpeedId) => void;
@@ -283,7 +361,7 @@ export function AppShell({
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden">
+    <div className="app-root flex h-dvh overflow-hidden">
       <aside className="v-panel hidden w-[268px] shrink-0 flex-col border-y-0 border-l-0 lg:flex">
         <SidebarContent
           nav={nav}
@@ -291,6 +369,8 @@ export function AppShell({
           conversations={conversations}
           kbDomains={kbDomains}
           onSelectConversation={onSelectConversation}
+          onRenameConversation={onRenameConversation}
+          onDeleteConversation={onDeleteConversation}
         />
       </aside>
 
@@ -309,6 +389,8 @@ export function AppShell({
               conversations={conversations}
               kbDomains={kbDomains}
               onSelectConversation={selectAndClose}
+              onRenameConversation={onRenameConversation}
+              onDeleteConversation={onDeleteConversation}
             />
           </aside>
         </div>

@@ -13,6 +13,33 @@ function withAttachment(text: string, attachment: Attachment | null): string {
   return `${text}\n\n--- Informazioni aggiuntive fornite dall'utente ---\n${attachment.text}\n--- fine informazioni aggiuntive ---`;
 }
 
+const OBJECTIVES = [
+  {
+    id: "tempo",
+    label: "Risparmiare tempo",
+    hint: "Togliere attrito e lavoro ripetitivo dalla routine.",
+    phrase: "risparmiare tempo",
+  },
+  {
+    id: "profitto",
+    label: "Generare profitto",
+    hint: "Costruire qualcosa che qualcuno sia disposto a pagare.",
+    phrase: "generare profitto",
+  },
+  {
+    id: "impatto",
+    label: "Creare impatto",
+    hint: "Produrre un beneficio sociale o ambientale misurabile.",
+    phrase: "creare un impatto sociale o ambientale",
+  },
+] as const;
+
+type ObjectiveId = (typeof OBJECTIVES)[number]["id"];
+
+function objectivePhrase(id: ObjectiveId | null): string {
+  return OBJECTIVES.find((o) => o.id === id)?.phrase ?? "risparmiare tempo";
+}
+
 const strokeProps = {
   fill: "none",
   stroke: "currentColor",
@@ -90,7 +117,7 @@ function EntryCard({
       <div className="flex min-w-0 flex-1 flex-col gap-2 sm:items-center">
         <h3 className="font-display text-lg leading-tight font-semibold">{title}</h3>
         <p className="text-[0.84rem] leading-snug text-muted sm:min-h-[2.6rem]">{description}</p>
-        <button onClick={onClick} disabled={disabled} className="v-cta mt-1">
+        <button onClick={onClick} disabled={disabled} className="v-cta mt-1 w-full">
           {cta}
         </button>
       </div>
@@ -120,7 +147,7 @@ export function IntakeWizard({
   const [step, setStep] = useState<Step>("has-idea");
   const [ideaText, setIdeaText] = useState("");
   const [ideaAttachment, setIdeaAttachment] = useState<Attachment | null>(null);
-  const [objective, setObjective] = useState<"tempo" | "profitto" | null>(null);
+  const [objective, setObjective] = useState<ObjectiveId | null>(null);
   const [scopeText, setScopeText] = useState("");
   const [scopeAttachment, setScopeAttachment] = useState<Attachment | null>(null);
 
@@ -132,7 +159,7 @@ export function IntakeWizard({
 
   function submitScopeKnown() {
     const parts = [
-      `Non ho ancora un'idea precisa. Il mio obiettivo è: ${objective === "tempo" ? "risparmiare tempo" : "generare profitto"}.`,
+      `Non ho ancora un'idea precisa. Il mio obiettivo è: ${objectivePhrase(objective)}.`,
       `Il mio ambito di riferimento (ruolo/expertise/contesto) è:`,
       withAttachment(scopeText.trim(), scopeAttachment),
     ];
@@ -140,7 +167,7 @@ export function IntakeWizard({
   }
 
   function submitScopeRandom() {
-    const message = `Non ho ancora un'idea precisa. Il mio obiettivo è: ${objective === "tempo" ? "risparmiare tempo" : "generare profitto"}. Non ho un ambito specifico in mente: sorprendimi tu scegliendo un ambito professionale o di vita quotidiana a caso e interessante, poi procediamo da lì.`;
+    const message = `Non ho ancora un'idea precisa. Il mio obiettivo è: ${objectivePhrase(objective)}. Non ho un ambito specifico in mente: proponimi tu un ambito professionale o di vita quotidiana interessante, spiegandomi in una riga perché lo hai scelto, poi procediamo da lì.`;
     onStart(message);
   }
 
@@ -156,9 +183,9 @@ export function IntakeWizard({
         />
         <EntryCard
           icon={<ProblemIcon />}
-          title="Esplora un problema?"
-          description="Risparmia tempo o genera profitto in un ambito specifico."
-          cta="Identifica problema"
+          title="Esplorazione guidata"
+          description="Vantage ti porta all'idea partendo dal tuo obiettivo e dal tuo ambito."
+          cta="Esplora con me"
           onClick={() => setStep("objective")}
         />
         <EntryCard
@@ -200,7 +227,7 @@ export function IntakeWizard({
             autoFocus
           />
           <FileAttach attachment={ideaAttachment} onChange={setIdeaAttachment} />
-          <button onClick={submitIdea} disabled={loading || !ideaText.trim()} className="v-cta">
+          <button onClick={submitIdea} disabled={loading || !ideaText.trim()} className="v-cta w-full">
             Continua
           </button>
         </>
@@ -210,31 +237,20 @@ export function IntakeWizard({
         <>
           <BackButton onClick={() => setStep("has-idea")} />
           <h3 className="font-display text-lg font-semibold">Che tipo di idea stai cercando?</h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button
-              onClick={() => {
-                setObjective("tempo");
-                setStep("scope-choice");
-              }}
-              className="v-card px-4 py-5 text-left transition-transform hover:-translate-y-0.5"
-            >
-              <span className="font-display block text-base font-semibold">Risparmiare tempo</span>
-              <span className="mt-1 block text-[0.8rem] text-muted">
-                Togliere attrito e lavoro ripetitivo dalla routine.
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                setObjective("profitto");
-                setStep("scope-choice");
-              }}
-              className="v-card px-4 py-5 text-left transition-transform hover:-translate-y-0.5"
-            >
-              <span className="font-display block text-base font-semibold">Generare profitto</span>
-              <span className="mt-1 block text-[0.8rem] text-muted">
-                Costruire qualcosa che qualcuno sia disposto a pagare.
-              </span>
-            </button>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {OBJECTIVES.map((o) => (
+              <button
+                key={o.id}
+                onClick={() => {
+                  setObjective(o.id);
+                  setStep("scope-choice");
+                }}
+                className="v-card px-4 py-5 text-left transition-transform hover:-translate-y-0.5"
+              >
+                <span className="font-display block text-base font-semibold">{o.label}</span>
+                <span className="mt-1 block text-[0.8rem] text-muted">{o.hint}</span>
+              </button>
+            ))}
           </div>
         </>
       )}
@@ -249,7 +265,7 @@ export function IntakeWizard({
             </p>
           </div>
           <div className="flex flex-col gap-2.5">
-            <button onClick={() => setStep("scope-input")} className="v-cta">
+            <button onClick={() => setStep("scope-input")} className="v-cta w-full">
               Sì, ce l&apos;ho
             </button>
             <button onClick={submitScopeRandom} disabled={loading} className="v-btn justify-center !py-2.5">
@@ -283,7 +299,7 @@ export function IntakeWizard({
           <button
             onClick={submitScopeKnown}
             disabled={loading || (!scopeText.trim() && !scopeAttachment)}
-            className="v-cta"
+            className="v-cta w-full"
           >
             Continua
           </button>
