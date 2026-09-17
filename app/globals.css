@@ -13,6 +13,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
+  --font-doc: var(--font-doc);
 }
 
 body {
@@ -210,6 +211,78 @@ body {
 }
 .animate-scale-in {
   animation: scale-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Registro "documento": solo per gli artefatti consegnabili (Sintesi
+   Esecutiva, MVP Completo). Tipografia monospaziata per intestazioni e
+   numerazione di sezione, per segnalare il passaggio da conversazione a
+   specifica tecnica — non un'altra bolla di chat. */
+.prose-doc {
+  counter-reset: docsection;
+}
+.prose-doc h1,
+.prose-doc h2,
+.prose-doc h3,
+.prose-doc h4 {
+  font-family: var(--font-doc), ui-monospace, "SF Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+  font-size: 0.78em;
+  color: var(--doc-accent, #a5b4fc);
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+  padding-top: 1em;
+  margin: 1.6em 0 0.6em;
+  line-height: 1.4;
+}
+.prose-doc > h1:first-child,
+.prose-doc > h2:first-child,
+.prose-doc > h3:first-child,
+.prose-doc > h4:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+.prose-doc h2::before,
+.prose-doc h3::before {
+  counter-increment: docsection;
+  content: counter(docsection, decimal-leading-zero) " · ";
+  opacity: 0.55;
+}
+.prose-doc strong {
+  font-weight: 600;
+  color: var(--doc-accent, #c7d2fe);
+}
+.prose-doc code {
+  font-family: var(--font-doc), ui-monospace, monospace;
+}
+.prose-doc table {
+  font-family: var(--font-doc), ui-monospace, monospace;
+  font-size: 0.82em;
+}
+.prose-doc th {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 0.92em;
+}
+
+/* Rilegatura a sinistra + trama a righe sottili, per leggere la card come
+   un foglio di specifica e non come un'altra bolla di chat. */
+.doc-sheet {
+  border-left-width: 3px;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.022) 0,
+    rgba(255, 255, 255, 0.022) 1px,
+    transparent 1px,
+    transparent 27px
+  );
+}
+.doc-sheet[data-doc-variant="full"] {
+  border-left-color: rgba(16, 185, 129, 0.55);
+}
+.doc-sheet[data-doc-variant="summary"] {
+  border-left-color: rgba(99, 102, 241, 0.55);
 }
 
 .animate-shimmer {

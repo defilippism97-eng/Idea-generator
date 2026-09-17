@@ -345,30 +345,35 @@ export default function Home() {
           )}
           {isResultCard ? (
             <div
-              className={`overflow-hidden rounded-2xl border shadow-lg ${
+              data-doc-variant={m.variant}
+              className={`doc-sheet overflow-hidden rounded-lg border-y border-r shadow-lg ${
                 m.variant === "full"
-                  ? "border-emerald-500/25 bg-emerald-500/[0.04] shadow-emerald-950/20"
-                  : "border-indigo-500/25 bg-indigo-500/[0.04] shadow-indigo-950/20"
+                  ? "border-emerald-500/25 bg-emerald-500/[0.035] shadow-emerald-950/20"
+                  : "border-indigo-500/25 bg-indigo-500/[0.035] shadow-indigo-950/20"
               }`}
             >
-              <div
-                className={`h-[3px] w-full bg-gradient-to-r ${
-                  m.variant === "full" ? "from-emerald-500 to-teal-400" : "from-indigo-500 to-violet-500"
-                }`}
-              />
-              <div className="flex items-center justify-between gap-2 px-5 pt-4 pb-1">
+              <div className="flex items-center justify-between gap-2 border-b border-dashed border-white/10 px-5 py-3">
                 <p
-                  className={`font-display text-xs font-semibold tracking-wide uppercase ${
+                  className={`font-doc text-[11px] font-semibold tracking-wider uppercase ${
                     m.variant === "full" ? "text-emerald-300" : "text-indigo-300"
                   }`}
                 >
-                  {m.variant === "full" ? "✅ " : "📋 "}
-                  {label}
+                  {m.variant === "full" ? "MVP_COMPLETO" : "SINTESI_ESECUTIVA"}
+                  <span className="ml-2 font-normal text-neutral-500">
+                    {m.variant === "full" ? "· prompt per AI di coding" : "· documento di lavoro"}
+                  </span>
                 </p>
                 {m.variant === "full" && m.content && <CopyButton text={m.content} />}
               </div>
-              <div className="px-5 pt-2 pb-5 text-sm leading-relaxed text-neutral-100">
-                {isStreamingEmpty ? <TypingIndicator /> : <Markdown text={m.content} />}
+              <div
+                className="px-5 pt-3 pb-5 text-sm leading-relaxed text-neutral-100"
+                style={
+                  {
+                    "--doc-accent": m.variant === "full" ? "#6ee7b7" : "#a5b4fc",
+                  } as React.CSSProperties
+                }
+              >
+                {isStreamingEmpty ? <TypingIndicator /> : <Markdown text={m.content} variant="doc" />}
               </div>
             </div>
           ) : (
