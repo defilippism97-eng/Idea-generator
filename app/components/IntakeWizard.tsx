@@ -6,14 +6,6 @@ import { VoiceInput } from "./VoiceInput";
 
 type Step = "has-idea" | "idea-input" | "objective" | "scope-choice" | "scope-input";
 
-function withAttachment(text: string, attachment: Attachment | null): string {
-  if (!attachment) return text;
-  // Evitare riferimenti "a file" (es. "[Allegato: nome.pdf]"): alcuni modelli
-  // li interpretano come un invito a invocare un tool di lettura file
-  // inesistente invece di leggere il testo già estratto qui sotto.
-  return `${text}\n\n--- Informazioni aggiuntive fornite dall'utente ---\n${attachment.text}\n--- fine informazioni aggiuntive ---`;
-}
-
 const OBJECTIVES = [
   {
     id: "tempo",
@@ -140,7 +132,7 @@ export function IntakeWizard({
   onSkip,
   loading,
 }: {
-  onStart: (message: string) => void;
+  onStart: (message: string, attachment?: Attachment | null) => void;
   onFeelingLucky: () => void;
   onSkip: () => void;
   loading: boolean;
@@ -160,18 +152,21 @@ export function IntakeWizard({
   }
 
   function submitIdea() {
-    const message = withAttachment(ideaText.trim(), ideaAttachment);
-    if (!message) return;
-    onStart(message);
+    const message = ideaText.trim();
+    // Il documento non entra nel testo del messaggio: verrebbe ricopiato
+    // nella bolla di chat. Viaggia a parte, come contesto.
+    if (!message && !ideaAttachment) return;
+    onStart(message || "Ti allego un documento da cui partire.", ideaAttachment);
   }
 
   function submitScopeKnown() {
     const parts = [
       `Non ho ancora un'idea precisa. Il mio obiettivo è: ${objectivePhrase(objective)}.`,
-      `Il mio ambito di riferimento (ruolo/expertise/contesto) è:`,
-      withAttachment(scopeText.trim(), scopeAttachment),
+      scopeText.trim()
+        ? `Il mio ambito di riferimento (ruolo/expertise/contesto) è:\n\n${scopeText.trim()}`
+        : "Il mio ambito di riferimento lo trovi nel documento che ti allego.",
     ];
-    onStart(parts.join("\n\n"));
+    onStart(parts.join("\n\n"), scopeAttachment);
   }
 
   function submitScopeRandom() {

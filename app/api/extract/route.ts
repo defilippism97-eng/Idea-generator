@@ -8,13 +8,10 @@ export const maxDuration = 60;
 // la build CJS funziona correttamente, quindi la forziamo con createRequire.
 const require = createRequire(import.meta.url);
 
-const MAX_CHARS = 20000;
-
-function truncate(text: string): string {
-  const trimmed = text.trim();
-  if (trimmed.length <= MAX_CHARS) return trimmed;
-  return `${trimmed.slice(0, MAX_CHARS)}\n\n[...troncato, il documento è più lungo...]`;
-}
+// Nessun troncamento: il documento viene restituito per intero. Se è troppo
+// lungo per la finestra del modello lo si dice esplicitamente al momento
+// dell'invio, invece di tagliarlo di nascosto e far ragionare Vantage su
+// metà testo senza che nessuno se ne accorga.
 
 export async function POST(req: Request) {
   const form = await req.formData();
@@ -65,7 +62,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "Nessun testo estraibile da questo file." }, { status: 422 });
     }
 
-    return Response.json({ text: truncate(text), filename: file.name });
+    return Response.json({ text: text.trim(), filename: file.name });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Errore durante l'estrazione.";
     return Response.json({ error: `Impossibile leggere il file: ${message}` }, { status: 500 });

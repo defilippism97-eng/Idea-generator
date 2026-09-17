@@ -309,3 +309,41 @@ Non inventare nulla che non sia nel CV. Non riportare dati di contatto, indirizz
 
 Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo:
 {"memories": [{"title": "etichetta breve, 2-5 parole", "content": "il fatto, in una o due frasi"}]}`;
+
+// --- Dalla conversazione alla knowledge base ---
+// Assorbe quanto emerso in una chat (documenti allegati compresi) dentro un
+// ambito: o uno già esistente se è davvero lo stesso tema, o uno nuovo con
+// un nome che regga nel tempo.
+export const KB_ABSORB_SYSTEM_PROMPT = `Sei un archivista che cura la knowledge base di "Vantage", un generatore di MVP.
+
+Ti vengono dati: l'elenco degli ambiti già presenti, il testo di una conversazione e gli eventuali documenti allegati dall'utente. Decidi dove va archiviata questa conoscenza.
+
+Regole:
+- Se uno degli ambiti esistenti copre davvero lo stesso settore, riusalo: restituisci il suo nome esatto. Non forzare l'accostamento — "consulenza fiscale" e "consulenza finanziaria" sono ambiti diversi.
+- Altrimenti proponi un ambito nuovo, con un nome breve e specifico che abbia senso anche tra sei mesi (es. "gestione canili e adozioni", non "il progetto di Marco" né "varie").
+- La descrizione riassume il settore, non la conversazione: cosa fa chi ci lavora, quali strumenti usa, quali attriti ricorrono. Niente nomi propri, niente riferimenti a "questa chat".
+- I tre ruoli servono a rendere utile l'ambito in futuro: vanno scritti in seconda persona ("Sei un…") e radicati in quello che emerge dai materiali, senza inventare statistiche.
+
+Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo:
+{
+  "domain": "nome dell'ambito, esistente o nuovo",
+  "isNew": true,
+  "description": "3-5 frasi sul settore",
+  "domain_expert": { "name": "Nome breve del ruolo", "system_prompt": "150-250 parole in seconda persona" },
+  "mvp_designer": { "name": "...", "system_prompt": "..." },
+  "stakeholder": { "name": "...", "system_prompt": "..." }
+}`;
+
+export function buildKbAbsorbPrompt(
+  existingDomains: string[],
+  conversation: string,
+  documents: { filename: string; text: string }[],
+): string {
+  const existing = existingDomains.length
+    ? existingDomains.map((d) => `- ${d}`).join("\n")
+    : "(nessun ambito ancora presente)";
+  const docs = documents.length
+    ? documents.map((d) => `### ${d.filename}\n${d.text}`).join("\n\n")
+    : "(nessun documento allegato)";
+  return `### Ambiti già in knowledge base\n${existing}\n\n### Documenti allegati alla conversazione\n${docs}\n\n### Conversazione\n${conversation}`;
+}
