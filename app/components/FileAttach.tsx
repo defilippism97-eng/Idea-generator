@@ -36,14 +36,14 @@ export function FileAttach({
 
   if (attachment) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs text-neutral-300">
+      <div className="animate-fade-in flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-2.5 text-xs text-emerald-200">
         <span>📎 {attachment.filename}</span>
         <button
           onClick={() => {
             onChange(null);
             if (inputRef.current) inputRef.current.value = "";
           }}
-          className="ml-auto text-neutral-500 hover:text-neutral-200"
+          className="ml-auto text-emerald-400/70 transition-colors hover:text-emerald-200"
         >
           Rimuovi
         </button>
@@ -67,7 +67,7 @@ export function FileAttach({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="rounded-lg border border-neutral-700 px-3 py-1.5 text-xs text-neutral-400 hover:bg-neutral-900 disabled:opacity-50"
+        className="rounded-xl border border-dashed border-white/15 px-3.5 py-2.5 text-xs text-neutral-400 transition-colors hover:border-white/25 hover:bg-white/[0.03] hover:text-neutral-200 disabled:opacity-50"
       >
         {uploading ? "Leggo il file…" : `📎 ${label}`}
       </button>

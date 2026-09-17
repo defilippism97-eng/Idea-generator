@@ -24,6 +24,21 @@ export const kbDomains = pgTable("kb_domains", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Fase 4: job di espansione autonoma della KB. Possibile solo perché l'app
+// gira come processo Node persistente (Render), non come function serverless
+// a vita breve (Vercel) — il loop in background sopravvive oltre la singola
+// richiesta HTTP che l'ha avviato.
+export const kbExpansionJobs = pgTable("kb_expansion_jobs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  mode: text("mode").notNull(), // "domain" | "general"
+  domain: text("domain"),
+  status: text("status").notNull().default("running"), // "running" | "done" | "error"
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  endsAt: timestamp("ends_at").notNull(),
+  log: jsonb("log").notNull().default([]).$type<{ at: string; message: string }[]>(),
+  domainsProcessed: jsonb("domains_processed").notNull().default([]).$type<string[]>(),
+});
+
 export const kbPersonas = pgTable("kb_personas", {
   id: uuid("id").defaultRandom().primaryKey(),
   domainId: uuid("domain_id")
