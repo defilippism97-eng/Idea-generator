@@ -1,5 +1,5 @@
 import { createClient, streamWithFallback } from "@/lib/llmStream";
-import { FALLBACK_MODELS, VANTAGE_SYSTEM_PROMPT } from "@/lib/vantage";
+import { FALLBACK_MODELS, vantageSystemPrompt } from "@/lib/vantage";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -34,7 +34,10 @@ export async function POST(req: Request) {
   // Il turno "stakeholder" impersona un ruolo della knowledge base (il
   // committente/cliente scettico per un dominio specifico) invece di
   // Vantage: usa il suo system prompt generato ad-hoc, passato dal client.
-  const system: string = mode === "stakeholder" ? (body.systemPrompt ?? VANTAGE_SYSTEM_PROMPT) : VANTAGE_SYSTEM_PROMPT;
+  // Nei turni di Vantage il prompt include la scheda su se stesso; nel turno
+  // "stakeholder" no, perché lì impersona un ruolo della knowledge base.
+  const system: string =
+    mode === "stakeholder" ? (body.systemPrompt ?? vantageSystemPrompt()) : vantageSystemPrompt();
 
   const client = createClient(apiKey);
   const maxTokens = mode === "full" ? 8000 : mode === "summary" ? 2048 : mode === "stakeholder" ? 1500 : 4096;

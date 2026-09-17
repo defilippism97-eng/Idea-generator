@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Attachment, FileAttach } from "./FileAttach";
 import { MemoryPanel } from "./MemoryPanel";
+import { VANTAGE_SELF_KNOWLEDGE } from "@/lib/vantage";
 
 type Source = { n: number; title: string; url: string };
 type Persona = { id: string; role: string; name: string; systemPrompt: string };
@@ -72,6 +73,40 @@ function WithCitations({ text, sources }: { text: string; sources: Source[] }) {
         );
       })}
     </>
+  );
+}
+
+/**
+ * Scheda fissa: quello che Vantage sa di se stesso. Non è un ambito come gli
+ * altri — non si crea, non si modifica e non si elimina — ma sta qui perché
+ * è a tutti gli effetti parte di ciò che porta in conversazione.
+ */
+function SelfKnowledgeCard() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="v-card overflow-hidden border-[color-mix(in_srgb,var(--gold)_35%,transparent)]">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm"
+      >
+        <span className="min-w-0">
+          <span className="block truncate font-medium">Chi è Vantage</span>
+          <span className="mt-0.5 block text-[0.72rem] text-muted">
+            scheda fissa · sempre presente in ogni conversazione
+          </span>
+        </span>
+        <span className="shrink-0 text-muted">{open ? "−" : "+"}</span>
+      </button>
+      {open && (
+        <div className="border-t border-line px-4 py-4">
+          <p className="text-[0.8rem] whitespace-pre-wrap text-muted">{VANTAGE_SELF_KNOWLEDGE}</p>
+          <p className="mt-3 text-[0.72rem] text-muted italic">
+            Questa scheda fa parte del prodotto: si aggiorna con le funzioni dell&apos;applicazione, non si
+            modifica da qui.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -558,6 +593,10 @@ export function KnowledgeBasePage({ onChanged }: { onChanged?: () => void }) {
               className="v-input mt-3"
               aria-label="Cerca nella knowledge base"
             />
+
+            <div className="mt-4">
+              <SelfKnowledgeCard />
+            </div>
 
             {domains === null ? (
               <p className="mt-4 text-xs text-muted">Carico…</p>

@@ -45,7 +45,26 @@ if (!url) {
 const dir = path.join(process.cwd(), "drizzle");
 const sql = postgres(url, { max: 1, onnotice: () => {} });
 
+// Un database serverless può essere "freddo" proprio quando parte il deploy:
+// un paio di tentativi evitano che un'indisponibilità di pochi secondi
+// impedisca all'applicazione di avviarsi del tutto.
+async function connectWithRetries(attempts = 5) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await sql`SELECT 1`;
+      return;
+    } catch (err) {
+      if (attempt >= attempts) throw err;
+      const wait = attempt * 2000;
+      console.log(`[migrate] database non raggiungibile (${err.code ?? err.message}), riprovo tra ${wait / 1000}s…`);
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+}
+
 try {
+  await connectWithRetries();
+
   await sql`CREATE TABLE IF NOT EXISTS _migrations (
     name text PRIMARY KEY,
     applied_at timestamptz NOT NULL DEFAULT now()
