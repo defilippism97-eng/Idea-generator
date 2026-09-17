@@ -9,10 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.2",
     "mammoth": "^1.12.3",
     "next": "^15.5.25",
     "openai": "^7.17.0",
     "pdf-parse": "^2.4.5",
+    "postgres": "^3.4.9",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "xlsx": "^0.18.5"
@@ -23,6 +25,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "^15.5.25",
     "tailwindcss": "^4",

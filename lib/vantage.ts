@@ -195,3 +195,35 @@ export const PERSONA_IDEA_SEEDS: string[] = [
 
 export const EXPLORE_ROUNDS = 3;
 export const EXPLORE_IDEA_ROUNDS = 1;
+
+// --- Knowledge Base (Fase 3) ---
+// Per ogni "ambito" (dominio professionale/tematico) generiamo 3 ruoli
+// riutilizzabili, radicati in ricerca web reale (Tavily) invece che nella
+// sola conoscenza generica del modello:
+// - domain_expert: conosce a fondo il dominio, valida i pain point come reali.
+// - mvp_designer: esperto di pattern di prodotto specifici per quel dominio.
+// - stakeholder: il "committente"/cliente (esterno o interno) che valuta
+//   l'MVP con occhio critico prima che venga generato il documento finale.
+
+export const KB_EXPANSION_SYSTEM_PROMPT = `Sei un ricercatore che costruisce una knowledge base di ruoli AI riutilizzabili per "Vantage", un generatore di MVP.
+
+Ti viene fornito un ambito/dominio (es. "fisioterapia freelance", "growth marketing SaaS B2B") e alcuni estratti da ricerche web reali su quel dominio. Il tuo compito è sintetizzare, SOLO a partire dai fatti nelle fonti fornite (non inventare statistiche o fatti specifici non presenti), tre system prompt per altrettanti ruoli AI specializzati in quel dominio:
+
+1. **domain_expert**: un esperto che conosce a fondo il dominio — terminologia corretta, strumenti/software realmente usati nel settore, normative rilevanti, pain point tipici documentati nelle fonti. Userà queste conoscenze per validare o correggere le ipotesi di Vantage durante la profilazione.
+2. **mvp_designer**: un designer di prodotto specializzato in pattern MVP tipici di quel dominio (es. quali automazioni funzionano bene, quali SaaS esistono già nel settore e perché falliscono, vincoli tecnici tipici del dominio).
+3. **stakeholder**: il tipico "committente"/decisore che valuterebbe l'MVP con occhio critico prima che parta lo sviluppo — se il dominio è professionale/commerciale, è un potenziale cliente pagante; se è un contesto aziendale interno, è un capo/collega/direzione che deve "comprare" l'idea internamente. Deve essere scettico e concreto, non un cliente-yes-man.
+
+Rispondi SOLO con un oggetto JSON valido (nessun testo prima o dopo), con questa forma esatta:
+{
+  "description": "descrizione del dominio in 2-3 frasi, basata sulle fonti",
+  "domain_expert": { "name": "Nome breve del ruolo", "system_prompt": "system prompt completo in italiano, 150-250 parole, in seconda persona (\\"Sei un...\\")" },
+  "mvp_designer": { "name": "Nome breve del ruolo", "system_prompt": "..." },
+  "stakeholder": { "name": "Nome breve del ruolo", "system_prompt": "..." }
+}`;
+
+export function buildKbExpansionPrompt(domain: string, sources: { title: string; url: string; content: string }[]): string {
+  const sourcesText = sources
+    .map((s, i) => `[Fonte ${i + 1}] ${s.title} (${s.url})\n${s.content.slice(0, 1500)}`)
+    .join("\n\n");
+  return `Ambito da modellare: ${domain}\n\n### Fonti di ricerca\n${sourcesText || "(nessuna fonte trovata: basati sulla tua conoscenza generale, dichiarandolo implicitamente con toni meno assertivi sulle statistiche)"}`;
+}
