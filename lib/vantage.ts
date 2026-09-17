@@ -221,7 +221,11 @@ export const EXPLORE_IDEA_ROUNDS = 1;
 
 export const KB_EXPANSION_SYSTEM_PROMPT = `Sei un ricercatore che costruisce una knowledge base di ruoli AI riutilizzabili per "Vantage", un generatore di MVP.
 
-Ti viene fornito un ambito/dominio (es. "fisioterapia freelance", "growth marketing SaaS B2B") e alcuni estratti da ricerche web reali su quel dominio. Il tuo compito è sintetizzare, SOLO a partire dai fatti nelle fonti fornite (non inventare statistiche o fatti specifici non presenti), tre system prompt per altrettanti ruoli AI specializzati in quel dominio:
+Ti viene fornito un ambito/dominio (es. "fisioterapia freelance", "growth marketing SaaS B2B") e alcuni estratti da ricerche web reali su quel dominio, ciascuno numerato come [1], [2], [3]…
+
+**Citazione delle fonti (obbligatoria).** Ogni affermazione che deriva da una fonte deve riportare subito dopo il numero della fonte tra parentesi quadre, es: "il 60% degli studi usa ancora agende cartacee [2]". Puoi citare più fonti insieme: [1][3]. Non inventare numeri di fonte che non ti sono stati forniti, e non citare nulla quando l'affermazione è una tua inferenza generale.
+
+Il tuo compito è sintetizzare, SOLO a partire dai fatti nelle fonti fornite (non inventare statistiche o fatti specifici non presenti), tre system prompt per altrettanti ruoli AI specializzati in quel dominio:
 
 1. **domain_expert**: un esperto che conosce a fondo il dominio — terminologia corretta, strumenti/software realmente usati nel settore, normative rilevanti, problemi quotidiani tipici documentati nelle fonti. Userà queste conoscenze per validare o correggere le ipotesi di Vantage durante la profilazione.
 2. **mvp_designer**: un designer di prodotto specializzato in pattern MVP tipici di quel dominio (es. quali automazioni funzionano bene, quali SaaS esistono già nel settore e perché falliscono, vincoli tecnici tipici del dominio).
@@ -229,7 +233,7 @@ Ti viene fornito un ambito/dominio (es. "fisioterapia freelance", "growth market
 
 Rispondi SOLO con un oggetto JSON valido (nessun testo prima o dopo), con questa forma esatta:
 {
-  "description": "descrizione del dominio in 2-3 frasi, basata sulle fonti",
+  "description": "descrizione del dominio in 3-5 frasi, basata sulle fonti, con i riferimenti numerati [1], [2]… accanto alle affermazioni che ne derivano",
   "domain_expert": { "name": "Nome breve del ruolo", "system_prompt": "system prompt completo in italiano, 150-250 parole, in seconda persona (\\"Sei un...\\")" },
   "mvp_designer": { "name": "Nome breve del ruolo", "system_prompt": "..." },
   "stakeholder": { "name": "Nome breve del ruolo", "system_prompt": "..." }
@@ -237,7 +241,7 @@ Rispondi SOLO con un oggetto JSON valido (nessun testo prima o dopo), con questa
 
 export function buildKbExpansionPrompt(domain: string, sources: { title: string; url: string; content: string }[]): string {
   const sourcesText = sources
-    .map((s, i) => `[Fonte ${i + 1}] ${s.title} (${s.url})\n${s.content.slice(0, 1500)}`)
+    .map((s, i) => `[${i + 1}] ${s.title} — ${s.url}\n${s.content.slice(0, 1500)}`)
     .join("\n\n");
   return `Ambito da modellare: ${domain}\n\n### Fonti di ricerca\n${sourcesText || "(nessuna fonte trovata: basati sulla tua conoscenza generale, dichiarandolo implicitamente con toni meno assertivi sulle statistiche)"}`;
 }

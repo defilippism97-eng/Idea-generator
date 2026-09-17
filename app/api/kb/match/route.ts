@@ -1,8 +1,11 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { kbDomains, kbPersonas } from "@/lib/db/schema";
+import { kbDocuments, kbDomains, kbPersonas } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
+
+const MAX_DOC_CHARS = 6_000;
+const MAX_TOTAL_CHARS = 18_000;
 
 function normalize(s: string): string[] {
   return s
@@ -41,7 +44,23 @@ export async function POST(req: Request) {
   if (!best || bestScore < 2) return Response.json({ domain: null });
 
   const personas = await db.select().from(kbPersonas).where(eq(kbPersonas.domainId, best.id));
+  const documents = await db.select().from(kbDocuments).where(eq(kbDocuments.domainId, best.id));
+
+  // Il materiale caricato dall'utente entra nel contesto della conversazione,
+  // troncato per non saturare la finestra dei modelli gratuiti.
+  const material = documents
+    .map((doc) => `### ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`)
+    .join("\n\n")
+    .slice(0, MAX_TOTAL_CHARS);
+
   return Response.json({
-    domain: { id: best.id, name: best.name, description: best.description, personas },
+    domain: {
+      id: best.id,
+      name: best.name,
+      description: best.description,
+      personas,
+      material: material || null,
+      documentTitles: documents.map((d) => d.title),
+    },
   });
 }

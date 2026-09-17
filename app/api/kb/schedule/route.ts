@@ -68,6 +68,16 @@ export async function POST(req: Request) {
   return Response.json({ jobId: job.id });
 }
 
+async function isCancelled(jobId: string): Promise<boolean> {
+  const db = getDb();
+  const [row] = await db
+    .select({ cancelRequested: kbExpansionJobs.cancelRequested })
+    .from(kbExpansionJobs)
+    .where(eq(kbExpansionJobs.id, jobId))
+    .limit(1);
+  return Boolean(row?.cancelRequested);
+}
+
 async function appendLog(jobId: string, message: string) {
   const db = getDb();
   const [row] = await db
@@ -99,6 +109,11 @@ async function runExpansionLoop(
     let nextTopic = mode === "domain" ? baseDomain! : await suggestNextDomain(client, mode, null, []);
 
     while (Date.now() < endsAt.getTime() && iterations < MAX_ITERATIONS) {
+      if (await isCancelled(jobId)) {
+        await appendLog(jobId, `Fermato su richiesta — ${covered.length} ambiti processati.`);
+        await db.update(kbExpansionJobs).set({ status: "stopped" }).where(eq(kbExpansionJobs.id, jobId));
+        return;
+      }
       iterations++;
       try {
         await appendLog(jobId, `[${iterations}] Espando: "${nextTopic}"…`);
@@ -116,7 +131,12 @@ async function runExpansionLoop(
 
       if (Date.now() >= endsAt.getTime() || iterations >= MAX_ITERATIONS) break;
 
-      await new Promise((r) => setTimeout(r, PAUSE_BETWEEN_MS));
+      // La pausa è lunga: spezzarla permette di reagire a uno stop senza
+      // far aspettare l'utente fino al ciclo successivo.
+      for (let waited = 0; waited < PAUSE_BETWEEN_MS; waited += 2000) {
+        await new Promise((r) => setTimeout(r, 2000));
+        if (await isCancelled(jobId)) break;
+      }
 
       try {
         nextTopic = await suggestNextDomain(client, mode, baseDomain, covered);

@@ -269,6 +269,24 @@ body {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-bright) 16%, transparent);
 }
 
+/* Nota numerata cliccabile accanto a un'affermazione */
+.citation {
+  display: inline-block;
+  vertical-align: super;
+  font-family: var(--font-doc), ui-monospace, monospace;
+  font-size: 0.62em;
+  line-height: 1;
+  padding: 0.15em 0.3em;
+  margin-left: 0.12em;
+  border-radius: 0.25em;
+  background: color-mix(in srgb, var(--brand-bright) 18%, transparent);
+  color: var(--brand-bright);
+  text-decoration: none;
+}
+.citation:hover {
+  background: color-mix(in srgb, var(--brand-bright) 34%, transparent);
+}
+
 /* Riga di statistica (Panoramica) */
 .v-stat {
   border: 1px solid var(--border);

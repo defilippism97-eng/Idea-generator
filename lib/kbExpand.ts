@@ -68,7 +68,9 @@ export async function expandKbDomain(client: OpenAI, domain: string) {
   if (!parsed) throw new Error(`JSON non valido dopo 2 tentativi: ${lastError}`);
 
   const db = getDb();
-  const domainSources = sources.map((s) => ({ title: s.title, url: s.url }));
+  // Numerate come nel prompt, così i riferimenti [n] nella descrizione
+  // puntano davvero alla fonte giusta.
+  const domainSources = sources.map((s, i) => ({ n: i + 1, title: s.title, url: s.url }));
   const [existing] = await db.select().from(kbDomains).where(eq(kbDomains.name, domain)).limit(1);
 
   let domainId: string;

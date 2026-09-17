@@ -21,3 +21,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   return Response.json({ job });
 }
+
+/**
+ * Richiede l'arresto di un'espansione in corso. Il loop gira in memoria: qui
+ * si alza solo la bandierina, che il ciclo rilegge tra un ambito e l'altro.
+ * L'ambito in lavorazione viene portato a termine, poi si ferma.
+ */
+export async function PATCH(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const db = getDb();
+  const [job] = await db
+    .update(kbExpansionJobs)
+    .set({ cancelRequested: true })
+    .where(eq(kbExpansionJobs.id, id))
+    .returning({ id: kbExpansionJobs.id, status: kbExpansionJobs.status });
+
+  if (!job) return Response.json({ error: "Processo non trovato." }, { status: 404 });
+  return Response.json({ ok: true });
+}
